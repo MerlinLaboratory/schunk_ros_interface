@@ -1,0 +1,15 @@
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/doxygen-docs.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/edit_cache.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/rebuild_cache.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/list_install_components.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/install.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/install/local.dir
+/CIPster/build/build-CIPster/src/eip-build/CMakeFiles/install/strip.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/eip.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/test_byte_bufs.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/edit_cache.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/rebuild_cache.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/list_install_components.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/install.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/install/local.dir
+/CIPster/build/build-CIPster/src/eip-build/src/CMakeFiles/install/strip.dir

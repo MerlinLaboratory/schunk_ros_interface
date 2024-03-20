@@ -1,0 +1,4 @@
+/CIPster/build/CMakeFiles/eip.dir
+/CIPster/build/CMakeFiles/sample.dir
+/CIPster/build/CMakeFiles/edit_cache.dir
+/CIPster/build/CMakeFiles/rebuild_cache.dir
