@@ -8,4 +8,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
+add_subdirectory("CIPster/CIPster/source")
+
 ament_package()
