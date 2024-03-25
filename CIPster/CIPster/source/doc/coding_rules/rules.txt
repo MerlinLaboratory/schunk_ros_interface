@@ -1,5 +1,0 @@
-With the advent of CIPster being created, the project will be maintained using the
-coding rules in the KiCad project with an exception that class names will be
-CamelCase.
-
-https://git.launchpad.net/kicad/tree/Documentation/development/coding-style-policy.md
