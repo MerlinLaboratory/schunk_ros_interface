@@ -7,16 +7,20 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem system)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
-add_executable(my_node src/my_node.cpp)
-include_directories(${Boost_INCLUDE_DIRS})
-target_link_libraries(my_node ${Boost_LIBRARIES})
+
+add_executable(schunk_gripper_node src/schunk_node.cpp src/schunk_eip_interface.cpp)
+ament_target_dependencies(schunk_gripper_node rclcpp std_msgs)
+
+# Adding EIPScanner library
+include_directories(/usr/local/include/EIPScanner)
+target_link_libraries(schunk_gripper_node EIPScanner)
+
 
 install(TARGETS
-  my_node
+  schunk_gripper_node
   DESTINATION lib/${PROJECT_NAME})
-
-# add_subdirectory("CIPster/CIPster/source")
 
 ament_package()
