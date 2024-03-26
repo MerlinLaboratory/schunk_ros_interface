@@ -4,7 +4,7 @@
 // ROS2 libraries
 #include "rclcpp/rclcpp.hpp"
 
-#include "../include/schunk_ros_interface/schunk_eip_interface.hpp"
+#include "../include/schunk_eip_interface.hpp"
 
 int main(int argc, char * argv[])
 {

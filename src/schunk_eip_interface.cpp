@@ -1,4 +1,4 @@
-#include "../include/schunk_ros_interface/schunk_eip_interface.hpp"
+#include "../include/schunk_eip_interface.hpp"
 
 template <typename dataType>
 dataType ReadEipData(std::shared_ptr<eipScanner::SessionInfo> si, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
@@ -26,10 +26,8 @@ void SchunkGripper::publishStateUpdate()
     // Update class data
     this->getEipData();
 
-    std_msgs::msg::String message;
-    message.data = "Ano Anale!";
-    RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-    state_publisher->publish(message);
+    schunk_interface::msg::SchunkGripperMsg message;
+    // state_publisher->publish(message);
 }
 
 void SchunkGripper::getInitialEipData()
