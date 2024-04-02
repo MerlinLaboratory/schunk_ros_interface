@@ -6,6 +6,7 @@
 
 // ROS2 libraries
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/float32.hpp"
 #include "schunk_interface/msg/schunk_gripper_msg.hpp"
 
 // EIPScanner libraries

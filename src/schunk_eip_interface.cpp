@@ -21,13 +21,40 @@ dataType ReadEipData(std::shared_ptr<eipScanner::SessionInfo> si, eipScanner::ci
     return data;
 }
 
+// ------------------------------------------------------------------------------------ //
+// ------------------------------ Schunk Class Functions ------------------------------ //
+// ------------------------------------------------------------------------------------ //
+
 void SchunkGripper::publishStateUpdate()
 {
     // Update class data
     this->getEipData();
 
     schunk_interface::msg::SchunkGripperMsg message;
-    // state_publisher->publish(message);
+    message.actual_pos.data = this->actual_pos;
+    message.actual_vel.data = this->actual_vel;
+    message.grp_prehold_time.data = this->grp_prehold_time;
+    message.dead_load_kg.data = this->dead_load_kg;
+    // message.tool_cent_point.data = this->tool_cent_point; <- not working
+    // message.cent_of_mass.data = this->cent_of_mass; <- not working
+    message.wp_lost_dst.data = this->wp_lost_dst;
+    message.wp_release_delta.data = this->wp_release_delta;
+    message.grp_pos_margin.data = this->grp_pos_margin;
+    message.max_phys_stroke.data = this->max_phys_stroke;
+    message.grp_prepos_delta.data = this->grp_prepos_delta;
+    message.min_pos.data = this->min_pos;
+    message.max_pos.data = this->max_pos;
+    message.zero_pos_ofs.data = this->zero_pos_ofs;
+    message.min_vel.data = this->min_vel;
+    message.max_vel.data = this->max_vel;
+    message.max_grp_vel.data = this->max_grp_vel;
+    message.min_grp_force.data = this->min_grp_force;
+    message.max_grp_force.data = this->max_grp_force;
+    // message.serial_no_num.data = this->serial_no_num; <- not working
+    // message.mac_addr.data = this->mac_addr; <- not working
+    message.enable_softreset.data = this->enable_softreset;
+
+    state_publisher->publish(message);
 }
 
 void SchunkGripper::getInitialEipData()
