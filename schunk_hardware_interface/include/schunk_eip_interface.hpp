@@ -9,6 +9,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "schunk_interface/msg/schunk_gripper_msg.hpp"
+#include "schunk_interface/srv/jog_to.hpp"
 
 // EIPScanner libraries
 #include "utils/Logger.h"
@@ -19,11 +20,21 @@
 
 #include "schunk_eip_parameters.hpp"
 
-// using namespace eipScanner::cip;
 using namespace std::chrono_literals;
-
 using eipScanner::utils::Logger;
 using eipScanner::utils::LogLevel;
+using eipScanner::cip::CipBool;
+using eipScanner::cip::CipUsint;
+using eipScanner::cip::CipReal;
+
+using std::placeholders::_1;
+using std::placeholders::_2;
+
+using schunk_interface::msg::SchunkGripperMsg;
+
+using schunk_interface::srv::JogTo;
+using JogToRequestPtr = std::shared_ptr<schunk_interface::srv::JogTo::Request>;
+using JogToResponsePtr = std::shared_ptr<schunk_interface::srv::JogTo::Response>;
 
 class SchunkGripper : public rclcpp::Node
 {
@@ -31,8 +42,13 @@ public:
     SchunkGripper(std::string node_name, std::string ip) : Node(node_name)
     {
         // ROS
+        this->callback_group_reentrant = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
         // Publishers
-        state_publisher = this->create_publisher<schunk_interface::msg::SchunkGripperMsg>(node_name + "_state", 10);
+        state_publisher = this->create_publisher<SchunkGripperMsg>(node_name + "_state", 10);
+
+        // Services
+        this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::JogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
 
         // Timers callbacks
         timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
@@ -73,7 +89,10 @@ public:
 
         this->io = this->connectionManager.forwardOpen(si, parameters);
 
-        this->SetDataToSend(this->dataToSend);
+        std::vector<uint8_t> bytes = std::vector<uint8_t>(16);
+        bytes[0] |= SET_1 << FAST_STOP_BIT_POS;
+        bytes[0] |= SET_1 << ACKNOWLEDGE_BIT_POS;
+        this->SetDataToSend(bytes);
 
         // Setting the handlers
         eipScanner::IOConnection::SendDataHandle
@@ -82,9 +101,10 @@ public:
             std::ostringstream ss;
             for (auto &byte : data)
                 ss << "[" << std::hex << (int)byte << "]";
-            Logger(LogLevel::INFO) << "Sent: " << ss.str();
+            // Logger(LogLevel::INFO) << "Sent: " << ss.str();
         };
-        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data) { this->dataReceived = data; };
+        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data) { 
+            this->dataReceived = data; std::cout << "EL PRINCIPE MILITO" << std::endl; };
         eipScanner::IOConnection::CloseHandle closeConnectionHandler = []() { Logger(LogLevel::INFO) << "Closed"; };
         this->SetHandlers(sendDataHandler, receiveHandler, closeConnectionHandler);
 
@@ -95,6 +115,7 @@ public:
             while (this->connectionManager.hasOpenConnections() && runningThread)
             {
                 connectionManager.handleConnections(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(100ms);
             }
             Logger(LogLevel::ERROR) << "Connection has been closed";
         };
@@ -137,12 +158,19 @@ private:
     // --------------------------------------------------------------------------------- //
 
     // ------- Ros variables ------- //
+    rclcpp::CallbackGroup::SharedPtr callback_group_reentrant;
 
     // Publishers
     rclcpp::Publisher<schunk_interface::msg::SchunkGripperMsg>::SharedPtr state_publisher;
 
+    // Services (server)
+    rclcpp::Service<JogTo>::SharedPtr jog_to_srv;
+
     // Timers
     rclcpp::TimerBase::SharedPtr timer;
+
+    // Callbacks
+    void JogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
 
     // ------- Eip variables ------- //
 
@@ -152,32 +180,34 @@ private:
     eipScanner::ConnectionManager connectionManager;
     eipScanner::IOConnection::WPtr io;
 
-    std::vector<uint8_t> dataToSend = std::vector<uint8_t>(16);
+    // std::vector<uint8_t> dataToSend = std::vector<uint8_t>(16);
     std::vector<uint8_t> dataReceived = std::vector<uint8_t>(16);
 
     // Async EIP data
-    eipScanner::cip::CipReal actual_pos; // TODO: Move to cyclical
-    eipScanner::cip::CipReal actual_vel; // TODO: Move to cyclical
+    CipReal actual_pos; // TODO: Move to cyclical
+    CipReal actual_vel; // TODO: Move to cyclical
     eipScanner::cip::CipWord grp_prehold_time;
-    eipScanner::cip::CipReal dead_load_kg;
-    std::vector<eipScanner::cip::CipReal> tool_cent_point;
-    std::vector<eipScanner::cip::CipReal> cent_of_mass;
-    eipScanner::cip::CipReal wp_lost_dst;
-    eipScanner::cip::CipReal wp_release_delta;
-    eipScanner::cip::CipReal grp_pos_margin;
-    eipScanner::cip::CipReal max_phys_stroke;
-    eipScanner::cip::CipReal grp_prepos_delta;
-    eipScanner::cip::CipReal min_pos;
-    eipScanner::cip::CipReal max_pos;
-    eipScanner::cip::CipReal zero_pos_ofs;
-    eipScanner::cip::CipReal min_vel;
-    eipScanner::cip::CipReal max_vel;
-    eipScanner::cip::CipReal max_grp_vel;
-    eipScanner::cip::CipReal min_grp_force;
-    eipScanner::cip::CipReal max_grp_force;
+    CipReal dead_load_kg;
+    std::vector<CipReal> tool_cent_point;
+    std::vector<CipReal> cent_of_mass;
+    CipReal wp_lost_dst;
+    CipReal wp_release_delta;
+    CipReal grp_pos_margin;
+    CipReal max_phys_stroke;
+    CipReal grp_prepos_delta;
+    CipReal min_pos;
+    CipReal max_pos;
+    CipReal zero_pos_ofs;
+    CipReal min_vel;
+    CipReal max_vel;
+    CipReal max_grp_vel;
+    CipReal min_grp_force;
+    CipReal max_grp_force;
     std::vector<eipScanner::cip::CipByte> serial_no_num;
-    eipScanner::cip::CipUsint mac_addr;
-    eipScanner::cip::CipBool enable_softreset;
+    CipUsint mac_addr;
+    CipBool enable_softreset;
+
+    bool repeat_command_toggle = false;
 
     // ------- Class variables ------- //
     bool runningThread = true;
