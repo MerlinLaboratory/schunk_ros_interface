@@ -1,0 +1,8 @@
+std_msgs/Float32 position             # [mm]
+std_msgs/Float32 velocity             # [mm/s]
+
+uint8 ABSOLUTE_MOTION = 0
+uint8 RELATIVE_MOTION = 1
+std_msgs/UInt8 motion_type           # either ABSOLUTE_MOTION or RELATIVE_MOTION
+---
+bool success
