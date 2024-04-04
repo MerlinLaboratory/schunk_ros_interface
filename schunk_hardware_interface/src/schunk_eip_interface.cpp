@@ -1,33 +1,77 @@
 #include "../include/schunk_eip_interface.hpp"
 
+// ------------------------------------------------------------------------------------ //
+// ----------------------- Functions for Implicit Communication ----------------------- //
+// ------------------------------------------------------------------------------------ //
+
+void SchunkGripper::SetDataToSend(std::vector<uint8_t> data)
+{
+    if (auto ptr = this->io.lock())
+    {
+        ptr->setDataToSend(data);
+    }
+    else
+    {
+        Logger(LogLevel::ERROR) << "Failed to open connection";
+        throw std::runtime_error("Failed to open connection");
+    }
+}
+
+void SchunkGripper::SetHandlers(eipScanner::IOConnection::SendDataHandle sendHandler,
+                                eipScanner::IOConnection::ReceiveDataHandle receiveHandler,
+                                eipScanner::IOConnection::CloseHandle closeHandler)
+{
+    if (auto ptr = this->io.lock())
+    {
+        if (sendHandler != nullptr)
+            ptr->setSendDataListener(sendHandler);
+        if (receiveHandler != nullptr)
+            ptr->setReceiveDataListener(receiveHandler);
+        if (closeHandler != nullptr)
+            ptr->setCloseListener(closeHandler);
+    }
+    else
+    {
+        Logger(LogLevel::ERROR) << "Failed to open connection";
+        throw std::runtime_error("Failed to open connection");
+    }
+}
+
+// ------------------------------------------------------------------------------------ //
+// ----------------------- Functions for Explicit Communication ----------------------- //
+// ------------------------------------------------------------------------------------ //
+
 template <typename dataType>
 dataType ReadEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
 {
     // Read Parameter Class Descriptor
     eipScanner::MessageRouter messageRouter;
-    MessageRouterResponse response = messageRouter.sendRequest(si_async, ServiceCodes::GET_ATTRIBUTE_SINGLE, EPath(CLASS, instance_id, attribute_name));
+    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::GET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name));
 
-    if (response.getGeneralStatusCode() != GeneralStatusCodes::SUCCESS) {
+    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    {
         Logger(LogLevel::ERROR) << "Failed to read";
         logGeneralAndAdditionalStatus(response);
 
         throw std::runtime_error("Failed to read attribute id:" + std::to_string(attribute_name) + " instance id:" + std::to_string(instance_id));
     }
 
-    Buffer buffer = Buffer(response.getData());
+    eipScanner::utils::Buffer buffer = eipScanner::utils::Buffer(response.getData());
     dataType data;
     buffer >> data;
 
     return data;
 }
 
+// TODO: place it in a service and check that it works (turn it into a template?)
 void WriteEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
 {
     // Read Parameter Class Descriptor
     eipScanner::MessageRouter messageRouter;
-    MessageRouterResponse response = messageRouter.sendRequest(si_async, ServiceCodes::SET_ATTRIBUTE_SINGLE, EPath(CLASS, instance_id, attribute_name));
+    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::SET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name));
 
-    if (response.getGeneralStatusCode() != GeneralStatusCodes::SUCCESS) {
+    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    {
         Logger(LogLevel::ERROR) << "Failed to write";
         logGeneralAndAdditionalStatus(response);
 
@@ -37,15 +81,51 @@ void WriteEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner:
     return;
 }
 
+void SchunkGripper::getExplicitEipData()
+{
+    try
+    {
+        this->grp_prehold_time = ReadEipData<eipScanner::cip::CipWord>(this->si, GRP_PREHOLD_TIME_ID, VALUE_ATTRIBUTE);
+        this->dead_load_kg = ReadEipData<eipScanner::cip::CipReal>(this->si, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE);
+        // this->tool_cent_point = ReadEipData<std::vector<eipScanner::cip::CipReal>>(this->si, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE); <-- not working
+        // this->cent_of_mass = ReadEipData<std::vector<eipScanner::cip::CipReal>>(this->si, CENT_OF_MASS_ID, VALUE_ATTRIBUTE); <-- not working
+        this->wp_lost_dst = ReadEipData<eipScanner::cip::CipReal>(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE);
+        this->wp_release_delta = ReadEipData<eipScanner::cip::CipReal>(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE);
+        this->grp_pos_margin = ReadEipData<eipScanner::cip::CipReal>(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE);
+        this->max_phys_stroke = ReadEipData<eipScanner::cip::CipReal>(this->si, MAX_PHYS_STROKE_ID, VALUE_ATTRIBUTE);
+        this->grp_prepos_delta = ReadEipData<eipScanner::cip::CipReal>(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE);
+        this->min_pos = ReadEipData<eipScanner::cip::CipReal>(this->si, MIN_POS_ID, VALUE_ATTRIBUTE);
+        this->max_pos = ReadEipData<eipScanner::cip::CipReal>(this->si, MAX_POS_ID, VALUE_ATTRIBUTE);
+        this->zero_pos_ofs = ReadEipData<eipScanner::cip::CipReal>(this->si, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE);
+        this->min_vel = ReadEipData<eipScanner::cip::CipReal>(this->si, MIN_VEL_ID, VALUE_ATTRIBUTE);
+        this->max_vel = ReadEipData<eipScanner::cip::CipReal>(this->si, MAX_VEL_ID, VALUE_ATTRIBUTE);
+        this->max_grp_vel = ReadEipData<eipScanner::cip::CipReal>(this->si, MAX_GRP_VEL_ID, VALUE_ATTRIBUTE);
+        this->min_grp_force = ReadEipData<eipScanner::cip::CipReal>(this->si, MIN_GRP_FORCE_ID, VALUE_ATTRIBUTE);
+        this->max_grp_force = ReadEipData<eipScanner::cip::CipReal>(this->si, MAX_GRP_FORCE_ID, VALUE_ATTRIBUTE);
+        // this->serial_no_num = ReadEipData<std::vector<eipScanner::cip::CipByte>>(this->si_async, SERIAL_NO_NUM_ID, VALUE_ATTRIBUTE); <-- not working
+        this->mac_addr = ReadEipData<eipScanner::cip::CipReal>(this->si, MAC_ADDR_ID, VALUE_ATTRIBUTE);
+        this->enable_softreset = ReadEipData<eipScanner::cip::CipReal>(this->si, ENABLE_SOFTRESET_ID, VALUE_ATTRIBUTE);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+
 // ------------------------------------------------------------------------------------ //
 // ------------------------------ Schunk Class Functions ------------------------------ //
 // ------------------------------------------------------------------------------------ //
 
 void SchunkGripper::publishStateUpdate()
 {
-    // Update class data
-    this->getEipData();
+    // Testing TODO: Remove me plz 
+    std::ostringstream ss;
+    for (auto &byte : this->dataReceived)
+        ss << "[" << std::hex << (int)byte << "]";
+    Logger(LogLevel::INFO) << "Received: " << ss.str();
+    // -------
 
+    // Filling msg and publishing it
     schunk_interface::msg::SchunkGripperMsg message;
     message.actual_pos.data = this->actual_pos;
     message.actual_vel.data = this->actual_vel;
@@ -72,61 +152,3 @@ void SchunkGripper::publishStateUpdate()
 
     state_publisher->publish(message);
 }
-
-void SchunkGripper::getInitialEipData()
-{
-    try
-    {
-        this->grp_prehold_time = ReadEipData<eipScanner::cip::CipWord>(this->si_async, GRP_PREHOLD_TIME_ID, VALUE_ATTRIBUTE);
-        this->dead_load_kg = ReadEipData<eipScanner::cip::CipReal>(this->si_async, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE);
-        // this->tool_cent_point = ReadEipData<std::vector<eipScanner::cip::CipReal>>(this->si_async, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE); <-- not working
-        // this->cent_of_mass = ReadEipData<std::vector<eipScanner::cip::CipReal>>(this->si_async, CENT_OF_MASS_ID, VALUE_ATTRIBUTE); <-- not working
-        this->wp_lost_dst = ReadEipData<eipScanner::cip::CipReal>(this->si_async, WP_LOST_DST_ID, VALUE_ATTRIBUTE); 
-        this->wp_release_delta = ReadEipData<eipScanner::cip::CipReal>(this->si_async, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE);
-        this->grp_pos_margin = ReadEipData<eipScanner::cip::CipReal>(this->si_async, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE);
-        this->max_phys_stroke = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAX_PHYS_STROKE_ID, VALUE_ATTRIBUTE);
-        this->grp_prepos_delta = ReadEipData<eipScanner::cip::CipReal>(this->si_async, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE);
-        this->min_pos = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MIN_POS_ID, VALUE_ATTRIBUTE);
-        this->max_pos = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAX_POS_ID, VALUE_ATTRIBUTE);
-        this->zero_pos_ofs = ReadEipData<eipScanner::cip::CipReal>(this->si_async, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE);
-        this->min_vel = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MIN_VEL_ID, VALUE_ATTRIBUTE);
-        this->max_vel = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAX_VEL_ID, VALUE_ATTRIBUTE);
-        this->max_grp_vel = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAX_GRP_VEL_ID, VALUE_ATTRIBUTE);
-        this->min_grp_force = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MIN_GRP_FORCE_ID, VALUE_ATTRIBUTE);
-        this->max_grp_force = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAX_GRP_FORCE_ID, VALUE_ATTRIBUTE);
-        // this->serial_no_num = ReadEipData<std::vector<eipScanner::cip::CipByte>>(this->si_async, SERIAL_NO_NUM_ID, VALUE_ATTRIBUTE); <-- not working
-        this->mac_addr = ReadEipData<eipScanner::cip::CipReal>(this->si_async, MAC_ADDR_ID, VALUE_ATTRIBUTE);
-        this->enable_softreset = ReadEipData<eipScanner::cip::CipReal>(this->si_async, ENABLE_SOFTRESET_ID, VALUE_ATTRIBUTE);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-}
-
-void SchunkGripper::getEipData()
-{
-    try
-    {
-        this->actual_pos = ReadEipData<CipReal>(this->si_async, ACTUAL_POS_ID, VALUE_ATTRIBUTE);
-        this->actual_vel = ReadEipData<CipReal>(this->si_async, ACTUAL_VEL_ID, VALUE_ATTRIBUTE);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-
-    // -------- Testing ---------- // 
-
-    if(temp)
-    {
-        // WriteEipData(this->si_async, );
-        temp = !temp;
-    }
-    else
-    {
-        // WriteEipData(this->si_async, );
-        temp = !temp;
-    }
-}
-
