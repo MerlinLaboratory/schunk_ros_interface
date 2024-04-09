@@ -60,20 +60,46 @@ const CipUint VALUE_ATTRIBUTE = 0x5;
 // ---------------------------------------------------------------------------- //
 const uint8_t SET_0 = 0;
 const uint8_t SET_1 = 1;
-const int32_t JOG_MODE_NEGATIVE_BIT_POS = 0;
-const int32_t JOG_MODE_POSITIVE_BIT_POS = 1;
-// const int32_t _ = 2; // reserved
-const int32_t RELEASE_WORKPIECE_BIT_POS = 3;
-const int32_t GRIP_WORKPIECE_BIT_POS = 4;
-const int32_t MOVE_TO_ABSOLUTE_POSITION_BIT_POS = 5;
-const int32_t MOVE_TO_RELATIVE_POSITION_BIT_POS = 6;
-// const int32_t _ = 7;
+const uint8_t JOG_MODE_NEGATIVE_BIT_POS = 0;
+const uint8_t JOG_MODE_POSITIVE_BIT_POS = 1;
+// const uint8_t _ = 2; // reserved
+const uint8_t RELEASE_WORKPIECE_BIT_POS = 3;
+const uint8_t GRIP_WORKPIECE_BIT_POS = 4;
+const uint8_t MOVE_TO_ABSOLUTE_POSITION_BIT_POS = 5;
+const uint8_t MOVE_TO_RELATIVE_POSITION_BIT_POS = 6;
+// const uint8_t _ = 7;
 
-const int32_t FAST_STOP_BIT_POS = 0;
-const int32_t STOP_BIT_POS = 1;
-const int32_t ACKNOWLEDGE_BIT_POS = 2;
-const int32_t PREPARE_FOR_SHUTDOWN_BIT_POS = 3;
-const int32_t SOFT_RESET_BIT_POS = 4;
-const int32_t RELEASE_FOR_MANUAL_BIT_POS = 5;
-const int32_t REPEAT_COMMAND_TOGGLE_BIT_POS = 6;
-const int32_t GRIP_DIRECTION_BIT_POS = 7;
+const uint8_t FAST_STOP_BIT_POS = 0;
+const uint8_t STOP_BIT_POS = 1;
+const uint8_t ACKNOWLEDGE_BIT_POS = 2;
+const uint8_t PREPARE_FOR_SHUTDOWN_BIT_POS = 3;
+const uint8_t SOFT_RESET_BIT_POS = 4;
+const uint8_t RELEASE_FOR_MANUAL_BIT_POS = 5;
+const uint8_t REPEAT_COMMAND_TOGGLE_BIT_POS = 6;
+const uint8_t GRIP_DIRECTION_BIT_POS = 7;
+
+// ---------------------------------------------------------------------------- //
+// -------------------------------- INPUT DATA -------------------------------- //
+// ---------------------------------------------------------------------------- //
+const uint8_t READY_FOR_OPERATION_BIT_POS = 0;
+const uint8_t CONTROL_AUTHORITY_FIELDBUS_BIT_POS = 1;
+const uint8_t READY_FOR_SHUTDOWN_BIT_POS = 2;
+const uint8_t NOT_FEASIBLE_BIT_POS = 3;
+const uint8_t COMMAND_SUCCESFULLY_PROCESSED_BIT_POS = 4;
+const uint8_t COMMAND_RECEIVED_TOGGLE_BIT_POS = 5;
+const uint8_t WARNING_BIT_POS = 6;
+const uint8_t ERROR_BIT_POS = 7;
+
+const uint8_t RELEASED_FOR_MANUAL_MOVEMENT_BIT_POS = 0;
+const uint8_t SOFTWARE_LIMIT_REACHED_BIT_POS = 1;
+// const uint8_t _ = 2;
+const uint8_t NO_WORKPIECE_DETECTED_BIT_POS = 3;
+const uint8_t WORKPIECE_GRIPPED_BIT_POS = 4;
+const uint8_t POSITION_REACHED_BIT_POS = 5;
+const uint8_t WORKPIECE_PRE_GRIP_STARTED_BIT_POS = 6;
+// const uint8_t _ = 7;
+
+const uint8_t WORKPIECE_LOST_BIT_POS = 0;
+const uint8_t WRONG_WORKPIECE_GRIPPED_BIT_POS = 1;
+
+const uint8_t GRIP_FORCE_AND_POSITION_MAINTAINANCE_ACTIVATED_BIT_POS = 7;

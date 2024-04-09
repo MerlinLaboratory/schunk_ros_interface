@@ -21,11 +21,12 @@
 #include "schunk_eip_parameters.hpp"
 
 using namespace std::chrono_literals;
+using eipScanner::cip::CipBool;
+using eipScanner::cip::CipReal;
+using eipScanner::cip::CipUsint;
+using eipScanner::cip::CipDint;
 using eipScanner::utils::Logger;
 using eipScanner::utils::LogLevel;
-using eipScanner::cip::CipBool;
-using eipScanner::cip::CipUsint;
-using eipScanner::cip::CipReal;
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -103,9 +104,10 @@ public:
                 ss << "[" << std::hex << (int)byte << "]";
             // Logger(LogLevel::INFO) << "Sent: " << ss.str();
         };
-        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data) { 
-            this->dataReceived = data; std::cout << "EL PRINCIPE MILITO" << std::endl; };
-        eipScanner::IOConnection::CloseHandle closeConnectionHandler = []() { Logger(LogLevel::INFO) << "Closed"; };
+        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data)
+        { this->dataReceived = data; };
+        eipScanner::IOConnection::CloseHandle closeConnectionHandler = []()
+        { Logger(LogLevel::INFO) << "Closed"; };
         this->SetHandlers(sendDataHandler, receiveHandler, closeConnectionHandler);
 
         // Launching the communication in a different thread
@@ -114,7 +116,7 @@ public:
         {
             while (this->connectionManager.hasOpenConnections() && runningThread)
             {
-                connectionManager.handleConnections(std::chrono::milliseconds(100));
+                connectionManager.handleConnections(std::chrono::milliseconds(100)); // TODO: make timeout a parameter
                 std::this_thread::sleep_for(100ms);
             }
             Logger(LogLevel::ERROR) << "Connection has been closed";
@@ -151,7 +153,8 @@ private:
     void publishStateUpdate();
 
     // Functions
-    eipScanner::cip::MessageRouterResponse readEipData(eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name);
+    // eipScanner::cip::MessageRouterResponse readEipData(eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name);
+    void DecodeImplicitData();
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //
@@ -183,9 +186,8 @@ private:
     // std::vector<uint8_t> dataToSend = std::vector<uint8_t>(16);
     std::vector<uint8_t> dataReceived = std::vector<uint8_t>(16);
 
-    // Async EIP data
-    CipReal actual_pos; // TODO: Move to cyclical
-    CipReal actual_vel; // TODO: Move to cyclical
+    // Explicit data
+    CipReal actual_vel;
     eipScanner::cip::CipWord grp_prehold_time;
     CipReal dead_load_kg;
     std::vector<CipReal> tool_cent_point;
@@ -207,7 +209,30 @@ private:
     CipUsint mac_addr;
     CipBool enable_softreset;
 
-    bool repeat_command_toggle = false;
+    // Implicit data
+    CipBool ready_for_operation_bit;
+    CipBool control_authority_fieldbus_bit;
+    CipBool ready_for_shutdown_bit;
+    CipBool not_feasible_bit;
+    CipBool command_succesfully_processed_bit;
+    CipBool command_received_toggle_bit;
+    CipBool warning_bit;
+    CipBool error_bit;
+
+    CipBool released_for_manual_movement_bit;
+    CipBool software_limit_reached_bit;
+    CipBool no_workpiece_detected_bit;
+    CipBool workpiece_gripped_bit;
+    CipBool position_reached_bit;
+    CipBool workpiece_pre_grip_started_bit;
+
+    CipBool workpiece_lost_bit;
+    CipBool wrong_workpiece_gripped_bit;
+
+    CipBool grip_force_and_position_maintainance_activated_bit;
+
+    CipReal actual_pos;
+    CipDint diagnostic;
 
     // ------- Class variables ------- //
     bool runningThread = true;

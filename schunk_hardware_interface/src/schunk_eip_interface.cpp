@@ -115,39 +115,81 @@ void SchunkGripper::getExplicitEipData()
 // ---------------------------------- ROS Functions ----------------------------------- //
 // ------------------------------------------------------------------------------------ //
 
+void SchunkGripper::DecodeImplicitData()
+{
+    // Check Schunk Documentation Pag 17/120
+    // Deconding Status
+    int status_start = 0;
+    int status_end = 4;
+
+    std::vector<uint8_t> status_bytes = std::vector<uint8_t>(this->dataReceived.begin() + status_start,
+                                                             this->dataReceived.begin() + status_end);
+
+    this->ready_for_operation_bit = (status_bytes[0] >> READY_FOR_OPERATION_BIT_POS) && 0x01;
+    this->control_authority_fieldbus_bit = (status_bytes[0] >> CONTROL_AUTHORITY_FIELDBUS_BIT_POS) && 0x01;
+    this->ready_for_shutdown_bit = (status_bytes[0] >> READY_FOR_SHUTDOWN_BIT_POS) && 0x01;
+    this->not_feasible_bit = (status_bytes[0] >> NOT_FEASIBLE_BIT_POS) && 0x01;
+    this->command_succesfully_processed_bit = (status_bytes[0] >> COMMAND_SUCCESFULLY_PROCESSED_BIT_POS) && 0x01;
+    this->command_received_toggle_bit = (status_bytes[0] >> COMMAND_RECEIVED_TOGGLE_BIT_POS) && 0x01;
+    this->warning_bit = (status_bytes[0] >> WARNING_BIT_POS) && 0x01;
+    this->error_bit = (status_bytes[0] >> ERROR_BIT_POS) && 0x01;
+
+    this->released_for_manual_movement_bit = (status_bytes[0] >> RELEASED_FOR_MANUAL_MOVEMENT_BIT_POS) && 0x01;
+    this->software_limit_reached_bit = (status_bytes[0] >> SOFTWARE_LIMIT_REACHED_BIT_POS) && 0x01;
+    this->no_workpiece_detected_bit = (status_bytes[0] >> NO_WORKPIECE_DETECTED_BIT_POS) && 0x01;
+
+    this->workpiece_gripped_bit = (status_bytes[0] >> WORKPIECE_GRIPPED_BIT_POS) && 0x01;
+    this->position_reached_bit = (status_bytes[0] >> POSITION_REACHED_BIT_POS) && 0x01;
+    this->workpiece_pre_grip_started_bit = (status_bytes[0] >> WORKPIECE_PRE_GRIP_STARTED_BIT_POS) && 0x01;
+
+    // Decoding Actual pos
+    int actual_pos_start = 4;
+    int actual_pos_end = 8;
+
+    std::vector<uint8_t> actual_pos_bytes = std::vector<uint8_t>(this->dataReceived.begin() + actual_pos_start,
+                                                                 this->dataReceived.begin() + actual_pos_end);
+
+    int actual_pos_um;
+    memcpy(&actual_pos_um, actual_pos_bytes.data(), sizeof(float));
+    this->actual_pos = actual_pos_um / 1000.0f; // from micrometers to mm
+
+    // Deconding Diagnostic
+    int diagnostic_pos_start = 12;
+    int diagnostic_pos_end = 16;
+
+    std::vector<uint8_t> diagnostic_pos_bytes = std::vector<uint8_t>(this->dataReceived.begin() + diagnostic_pos_start,
+                                                                     this->dataReceived.begin() + diagnostic_pos_end);
+    memcpy(&this->diagnostic, diagnostic_pos_bytes.data(), sizeof(int));
+}
+
 void SchunkGripper::publishStateUpdate()
 {
-    // Testing TODO: Remove me plz 
-    std::ostringstream ss;
-    for (auto &byte : this->dataReceived)
-        ss << "[" << std::hex << (int)byte << "]";
-    // Logger(LogLevel::INFO) << "Received: " << ss.str();
-    // -------
+    this->DecodeImplicitData();
 
     // Filling msg and publishing it
     schunk_interface::msg::SchunkGripperMsg message;
     message.actual_pos.data = this->actual_pos;
     message.actual_vel.data = this->actual_vel;
-    message.grp_prehold_time.data = this->grp_prehold_time;
-    message.dead_load_kg.data = this->dead_load_kg;
+    message.grp_prehold_time.data = this->grp_prehold_time; // TODO: Create a ROSparam
+    message.dead_load_kg.data = this->dead_load_kg;         // TODO: Create a ROSparam
     // message.tool_cent_point.data = this->tool_cent_point; <- not working
     // message.cent_of_mass.data = this->cent_of_mass; <- not working
-    message.wp_lost_dst.data = this->wp_lost_dst;
-    message.wp_release_delta.data = this->wp_release_delta;
-    message.grp_pos_margin.data = this->grp_pos_margin;
-    message.max_phys_stroke.data = this->max_phys_stroke;
-    message.grp_prepos_delta.data = this->grp_prepos_delta;
-    message.min_pos.data = this->min_pos;
-    message.max_pos.data = this->max_pos;
-    message.zero_pos_ofs.data = this->zero_pos_ofs;
-    message.min_vel.data = this->min_vel;
-    message.max_vel.data = this->max_vel;
-    message.max_grp_vel.data = this->max_grp_vel;
-    message.min_grp_force.data = this->min_grp_force;
-    message.max_grp_force.data = this->max_grp_force;
+    message.wp_lost_dst.data = this->wp_lost_dst;           // TODO: Create a ROSparam
+    message.wp_release_delta.data = this->wp_release_delta; // TODO: Create a ROSparam
+    message.grp_pos_margin.data = this->grp_pos_margin;     // TODO: Create a ROSparam
+    message.max_phys_stroke.data = this->max_phys_stroke;   // TODO: Create a ROSparam
+    message.grp_prepos_delta.data = this->grp_prepos_delta; // TODO: Create a ROSparam
+    message.min_pos.data = this->min_pos;                   // TODO: Create a ROSparam
+    message.max_pos.data = this->max_pos;                   // TODO: Create a ROSparam
+    message.zero_pos_ofs.data = this->zero_pos_ofs;         // TODO: Create a ROSparam
+    message.min_vel.data = this->min_vel;                   // TODO: Create a ROSparam
+    message.max_vel.data = this->max_vel;                   // TODO: Create a ROSparam
+    message.max_grp_vel.data = this->max_grp_vel;           // TODO: Create a ROSparam
+    message.min_grp_force.data = this->min_grp_force;       // TODO: Create a ROSparam
+    message.max_grp_force.data = this->max_grp_force;       // TODO: Create a ROSparam
     // message.serial_no_num.data = this->serial_no_num; <- not working
     // message.mac_addr.data = this->mac_addr; <- not working
-    message.enable_softreset.data = this->enable_softreset;
+    message.enable_softreset.data = this->enable_softreset; // TODO: Create a ROSparam
 
     state_publisher->publish(message);
 }
@@ -161,13 +203,13 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     res->success = false;
 
     // Check whether requested position and velocities are outside of bounds
-    if(desired_position < this->min_pos * 1000 || desired_position > this->max_pos * 1000)
+    if (desired_position < this->min_pos * 1000 || desired_position > this->max_pos * 1000)
     {
         RCLCPP_WARN(this->get_logger(), "Desired position is out of bounds");
         RCLCPP_WARN(this->get_logger(), "min=%f and max=%f", this->min_pos, this->max_pos);
         return;
     }
-    if(desired_velocity < this->min_vel * 1000 || desired_velocity > this->max_vel * 1000)
+    if (desired_velocity < this->min_vel * 1000 || desired_velocity > this->max_vel * 1000)
     {
         RCLCPP_WARN(this->get_logger(), "Desired velocity is out of bounds");
         RCLCPP_WARN(this->get_logger(), "min=%f and max=%f", this->min_vel, this->max_vel);
@@ -177,7 +219,7 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     // Check that motion_type is ABSOLUTE or RELATIVE
     auto ABSOLUTE_MOTION = schunk_interface::srv::JogTo::Request::ABSOLUTE_MOTION;
     auto RELATIVE_MOTION = schunk_interface::srv::JogTo::Request::RELATIVE_MOTION;
-    if(motion_type != ABSOLUTE_MOTION && motion_type != RELATIVE_MOTION)
+    if (motion_type != ABSOLUTE_MOTION && motion_type != RELATIVE_MOTION)
     {
         RCLCPP_WARN(this->get_logger(), "Only available motions are ABSOLUTE or RELATIVE");
         return;
@@ -190,7 +232,7 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     bytes[1] |= SET_1 << MOVE_TO_ABSOLUTE_POSITION_BIT_POS;
     // bytes[0] |= (repeat_command_toggle? SET_0:SET_1 << REPEAT_COMMAND_TOGGLE_BIT_POS); // TODO: check me
 
-    for(int index=0; index<4; index++)
+    for (int index = 0; index < 4; index++)
     {
         bytes[4 + index] = desired_position >> (index * 8) & 0xFF;
         bytes[8 + index] = desired_velocity >> (index * 8) & 0xFF;
@@ -200,16 +242,18 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 
     // Waiting from EIP that command has been received
 
-    // Testing
-    auto start = std::chrono::system_clock::now();
-    auto end = start + 5s;
+    // Waiting for the command to be finished target position reached setting the control bit "stop"
 
-    // Waiting from EIP that command is finished
-    while(std::chrono::system_clock::now() < end)
-    {
-        RCLCPP_INFO(this->get_logger(), "Stucked in the service server!");
-        std::this_thread::sleep_for(100ms);
-    }
+    // Testing
+    // auto start = std::chrono::system_clock::now();
+    // auto end = start + 5s;
+
+    // // Waiting from EIP that command is finished
+    // while(std::chrono::system_clock::now() < end)
+    // {
+    //     RCLCPP_INFO(this->get_logger(), "Stucked in the service server!");
+    //     std::this_thread::sleep_for(100ms);
+    // }
 
     res->success = true;
 }
