@@ -7,6 +7,7 @@ void SchunkGripper::SetDataToSend(std::vector<uint8_t> data)
 {
     if (auto ptr = this->io.lock())
     {
+        this->dataSent = data;
         ptr->setDataToSend(data);
     }
     else
@@ -208,6 +209,21 @@ void SchunkGripper::publishStateUpdate()
     state_publisher->publish(message);
 }
 
+void SchunkGripper::AcknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res)
+{
+    // Setting the bytes in EIP data
+    std::vector<uint8_t> bytes = this->dataSent;
+    bytes[0] &= ~(SET_1 << ACKNOWLEDGE_BIT_POS);
+    this->SetDataToSend(bytes);
+
+    std::this_thread::sleep_for(5000ms);
+
+    bytes[0] |= SET_1 << ACKNOWLEDGE_BIT_POS;
+    this->SetDataToSend(bytes);
+
+    res->success = true;
+}
+
 void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 {
     int32_t desired_position = static_cast<int32_t>(req->position.data * 1000);
@@ -219,14 +235,14 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     // Check whether requested position and velocities are outside of bounds
     if (desired_position < this->min_pos * 1000 || desired_position > this->max_pos * 1000)
     {
-        RCLCPP_WARN(this->get_logger(), "Desired position is out of bounds");
-        RCLCPP_WARN(this->get_logger(), "min=%f and max=%f", this->min_pos, this->max_pos);
+        RCLCPP_ERROR(this->get_logger(), "Desired position is out of bounds");
+        RCLCPP_ERROR(this->get_logger(), "min=%f and max=%f", this->min_pos, this->max_pos);
         return;
     }
     if (desired_velocity < this->min_vel * 1000 || desired_velocity > this->max_vel * 1000)
     {
-        RCLCPP_WARN(this->get_logger(), "Desired velocity is out of bounds");
-        RCLCPP_WARN(this->get_logger(), "min=%f and max=%f", this->min_vel, this->max_vel);
+        RCLCPP_ERROR(this->get_logger(), "Desired velocity is out of bounds");
+        RCLCPP_ERROR(this->get_logger(), "min=%f and max=%f", this->min_vel, this->max_vel);
         return;
     }
 
@@ -235,16 +251,24 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     auto RELATIVE_MOTION = schunk_interface::srv::JogTo::Request::RELATIVE_MOTION;
     if (motion_type != ABSOLUTE_MOTION && motion_type != RELATIVE_MOTION)
     {
-        RCLCPP_WARN(this->get_logger(), "Only available motions are ABSOLUTE or RELATIVE");
+        RCLCPP_ERROR(this->get_logger(), "Only available motions are ABSOLUTE or RELATIVE");
         return;
     }
 
-    std::vector<uint8_t> bytes = std::vector<uint8_t>(16);
+    // // Check if gripper is ready for operation
+    // if(this->ready_for_operation_bit)
+    // {
+    //     RCLCPP_ERROR(this->get_logger(), "Ready for operation bit");
+    //     res->success = false;
+    //     return;
+    // }
 
     // Setting the bytes in EIP data
+    std::vector<uint8_t> bytes = std::vector<uint8_t>(16);
     bytes[0] |= SET_1 << FAST_STOP_BIT_POS;
-    bytes[1] |= SET_1 << MOVE_TO_ABSOLUTE_POSITION_BIT_POS;
-    // bytes[0] |= (repeat_command_toggle? SET_0:SET_1 << REPEAT_COMMAND_TOGGLE_BIT_POS); // TODO: check me
+    if(this->command_received_toggle_bit)
+         bytes[0] |= SET_1 << REPEAT_COMMAND_TOGGLE_BIT_POS; // TODO: check me
+    bytes[1] |= SET_1 << MOVE_TO_ABSOLUTE_POSITION_BIT_POS; // TODO: create also RELATIVE position
 
     for (int index = 0; index < 4; index++)
     {
@@ -253,21 +277,49 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     }
 
     this->SetDataToSend(bytes);
-
     // Waiting from EIP that command has been received
+    std::chrono::duration<int> timeout(5);
+
+    auto start = std::chrono::system_clock::now();
+    while(this->command_received_toggle_bit == false)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
+
+        if(elapesed_time > timeout)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Command not received by gripper");
+            res->success = false;
+            return;
+        }
+
+        std::this_thread::sleep_for(100ms);
+    }
+    this->command_received_toggle_bit = false;
 
     // Waiting for the command to be finished target position reached setting the control bit "stop"
+    start = std::chrono::system_clock::now();
+    while(this->position_reached_bit == false && this->command_succesfully_processed_bit == false)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
 
-    // Testing
-    // auto start = std::chrono::system_clock::now();
-    // auto end = start + 5s;
+        if(elapesed_time > timeout)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Cannot finish withing timeout");
+            res->success = false;
+            return;
+        }
 
-    // // Waiting from EIP that command is finished
-    // while(std::chrono::system_clock::now() < end)
-    // {
-    //     RCLCPP_INFO(this->get_logger(), "Stucked in the service server!");
-    //     std::this_thread::sleep_for(100ms);
-    // }
+        std::this_thread::sleep_for(100ms);
+    }
+    this->position_reached_bit = false;
+    this->command_succesfully_processed_bit = false;
+
+    // bytes = std::vector<uint8_t>(16);
+    // bytes[0] |= SET_1 << FAST_STOP_BIT_POS;
+    // bytes[0] |= SET_1 << ACKNOWLEDGE_BIT_POS;
+    // this->SetDataToSend(bytes);
 
     res->success = true;
 }

@@ -9,10 +9,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(schunk_interface REQUIRED)
 
 add_executable(schunk_gripper_node src/schunk_node.cpp src/schunk_eip_interface.cpp)
-ament_target_dependencies(schunk_gripper_node rclcpp std_msgs schunk_interface)
+ament_target_dependencies(schunk_gripper_node rclcpp std_msgs std_srvs schunk_interface)
 
 # Adding EIPScanner library
 include_directories(/usr/local/include/EIPScanner)

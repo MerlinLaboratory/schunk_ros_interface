@@ -11,6 +11,7 @@
 // ROS2 libraries
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "schunk_interface/msg/schunk_gripper_msg.hpp"
 #include "schunk_interface/srv/jog_to.hpp"
 
@@ -41,6 +42,10 @@ using schunk_interface::srv::JogTo;
 using JogToRequestPtr = std::shared_ptr<schunk_interface::srv::JogTo::Request>;
 using JogToResponsePtr = std::shared_ptr<schunk_interface::srv::JogTo::Response>;
 
+using std_srvs::srv::Trigger;
+using TriggerRequestPtr = std::shared_ptr<std_srvs::srv::Trigger::Request>;
+using TriggerResponsePtr = std::shared_ptr<std_srvs::srv::Trigger::Response>;
+
 class SchunkGripper : public rclcpp::Node
 {
 public:
@@ -53,6 +58,7 @@ public:
         state_publisher = this->create_publisher<SchunkGripperMsg>(node_name + "_state", 10);
 
         // Services
+        this->acknowledge_srv = this->create_service<Trigger>("acknowledge", std::bind(&SchunkGripper::AcknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
         this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::JogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
 
         // Timers callbacks
@@ -171,12 +177,14 @@ private:
     rclcpp::Publisher<schunk_interface::msg::SchunkGripperMsg>::SharedPtr state_publisher;
 
     // Services (server)
+    rclcpp::Service<Trigger>::SharedPtr acknowledge_srv;
     rclcpp::Service<JogTo>::SharedPtr jog_to_srv;
 
     // Timers
     rclcpp::TimerBase::SharedPtr timer;
 
     // Callbacks
+    void AcknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res);
     void JogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
 
     // ------- Eip variables ------- //
@@ -187,7 +195,7 @@ private:
     eipScanner::ConnectionManager connectionManager;
     eipScanner::IOConnection::WPtr io;
 
-    // std::vector<uint8_t> dataToSend = std::vector<uint8_t>(16);
+    std::vector<uint8_t> dataSent = std::vector<uint8_t>(16);
     std::vector<uint8_t> dataReceived = std::vector<uint8_t>(16);
 
     // Explicit data
