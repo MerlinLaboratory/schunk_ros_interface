@@ -1,3 +1,6 @@
+#ifndef SCHUNK_GRIPPER_H
+#define SCHUNK_GRIPPER_H
+
 // Standard libraries
 #include <chrono>
 #include <functional>
@@ -18,6 +21,7 @@
 #include <cip/connectionManager/NetworkConnectionParams.h>
 #include "ConnectionManager.h"
 
+#include "debug_codes.hpp"
 #include "schunk_eip_parameters.hpp"
 
 using namespace std::chrono_literals;
@@ -209,32 +213,39 @@ private:
     CipUsint mac_addr;
     CipBool enable_softreset;
 
-    // Implicit data
-    CipBool ready_for_operation_bit;
-    CipBool control_authority_fieldbus_bit;
-    CipBool ready_for_shutdown_bit;
-    CipBool not_feasible_bit;
-    CipBool command_succesfully_processed_bit;
-    CipBool command_received_toggle_bit;
-    CipBool warning_bit;
-    CipBool error_bit;
+    // ------------ Implicit data ------------ //
 
-    CipBool released_for_manual_movement_bit;
-    CipBool software_limit_reached_bit;
-    CipBool no_workpiece_detected_bit;
-    CipBool workpiece_gripped_bit;
-    CipBool position_reached_bit;
-    CipBool workpiece_pre_grip_started_bit;
+    // Status
+    CipDint ready_for_operation_bit;
+    CipDint control_authority_fieldbus_bit;
+    CipDint ready_for_shutdown_bit;
+    CipDint not_feasible_bit;
+    CipDint command_succesfully_processed_bit;
+    CipDint command_received_toggle_bit;
+    CipDint warning_bit;
+    CipDint error_bit;
 
-    CipBool workpiece_lost_bit;
-    CipBool wrong_workpiece_gripped_bit;
+    CipDint released_for_manual_movement_bit;
+    CipDint software_limit_reached_bit;
+    CipDint no_workpiece_detected_bit;
+    CipDint workpiece_gripped_bit;
+    CipDint position_reached_bit;
+    CipDint workpiece_pre_grip_started_bit;
 
-    CipBool grip_force_and_position_maintainance_activated_bit;
+    CipDint workpiece_lost_bit;
+    CipDint wrong_workpiece_gripped_bit;
+
+    CipDint grip_force_and_position_maintainance_activated_bit;
 
     CipReal actual_pos;
-    CipDint diagnostic;
+
+    // ------------ Diagnostic ------------ //
+    CipDint error_code = 0;
+    CipDint warning_code = 0;
+    CipDint additional_code;
 
     // ------- Class variables ------- //
     bool runningThread = true;
     std::thread communication_thread;
 };
+#endif

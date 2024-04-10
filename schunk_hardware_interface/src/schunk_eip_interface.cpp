@@ -159,7 +159,10 @@ void SchunkGripper::DecodeImplicitData()
 
     std::vector<uint8_t> diagnostic_pos_bytes = std::vector<uint8_t>(this->dataReceived.begin() + diagnostic_pos_start,
                                                                      this->dataReceived.begin() + diagnostic_pos_end);
-    memcpy(&this->diagnostic, diagnostic_pos_bytes.data(), sizeof(int));
+
+    this->error_code = diagnostic_pos_bytes[0];
+    this->warning_code = diagnostic_pos_bytes[2];
+    this->additional_code = diagnostic_pos_bytes[3];
 }
 
 void SchunkGripper::publishStateUpdate()
@@ -168,28 +171,39 @@ void SchunkGripper::publishStateUpdate()
 
     // Filling msg and publishing it
     schunk_interface::msg::SchunkGripperMsg message;
-    message.actual_pos.data = this->actual_pos;
-    message.actual_vel.data = this->actual_vel;
-    message.grp_prehold_time.data = this->grp_prehold_time; // TODO: Create a ROSparam
-    message.dead_load_kg.data = this->dead_load_kg;         // TODO: Create a ROSparam
+    message.actual_pos = this->actual_pos;
+
+    if(this->warning_bit){
+        message.warn_code = this->warning_code;
+        message.warn_msg = mapper_warning.at(this->warning_code);
+    }
+
+    if(this->error_bit){
+        message.error_code = this->error_code;
+        message.error_msg = mapper_error.at(this->error_code);
+    }
+
+    // message.actual_vel.data = this->actual_vel;
+    // message.grp_prehold_time.data = this->grp_prehold_time; // TODO: Create a ROSparam
+    // message.dead_load_kg.data = this->dead_load_kg;         // TODO: Create a ROSparam
     // message.tool_cent_point.data = this->tool_cent_point; <- not working
     // message.cent_of_mass.data = this->cent_of_mass; <- not working
-    message.wp_lost_dst.data = this->wp_lost_dst;           // TODO: Create a ROSparam
-    message.wp_release_delta.data = this->wp_release_delta; // TODO: Create a ROSparam
-    message.grp_pos_margin.data = this->grp_pos_margin;     // TODO: Create a ROSparam
-    message.max_phys_stroke.data = this->max_phys_stroke;   // TODO: Create a ROSparam
-    message.grp_prepos_delta.data = this->grp_prepos_delta; // TODO: Create a ROSparam
-    message.min_pos.data = this->min_pos;                   // TODO: Create a ROSparam
-    message.max_pos.data = this->max_pos;                   // TODO: Create a ROSparam
-    message.zero_pos_ofs.data = this->zero_pos_ofs;         // TODO: Create a ROSparam
-    message.min_vel.data = this->min_vel;                   // TODO: Create a ROSparam
-    message.max_vel.data = this->max_vel;                   // TODO: Create a ROSparam
-    message.max_grp_vel.data = this->max_grp_vel;           // TODO: Create a ROSparam
-    message.min_grp_force.data = this->min_grp_force;       // TODO: Create a ROSparam
-    message.max_grp_force.data = this->max_grp_force;       // TODO: Create a ROSparam
+    // message.wp_lost_dst.data = this->wp_lost_dst;           // TODO: Create a ROSparam
+    // message.wp_release_delta.data = this->wp_release_delta; // TODO: Create a ROSparam
+    // message.grp_pos_margin.data = this->grp_pos_margin;     // TODO: Create a ROSparam
+    // message.max_phys_stroke.data = this->max_phys_stroke;   // TODO: Create a ROSparam
+    // message.grp_prepos_delta.data = this->grp_prepos_delta; // TODO: Create a ROSparam
+    // message.min_pos.data = this->min_pos;                   // TODO: Create a ROSparam
+    // message.max_pos.data = this->max_pos;                   // TODO: Create a ROSparam
+    // message.zero_pos_ofs.data = this->zero_pos_ofs;         // TODO: Create a ROSparam
+    // message.min_vel.data = this->min_vel;                   // TODO: Create a ROSparam
+    // message.max_vel.data = this->max_vel;                   // TODO: Create a ROSparam
+    // message.max_grp_vel.data = this->max_grp_vel;           // TODO: Create a ROSparam
+    // message.min_grp_force.data = this->min_grp_force;       // TODO: Create a ROSparam
+    // message.max_grp_force.data = this->max_grp_force;       // TODO: Create a ROSparam
     // message.serial_no_num.data = this->serial_no_num; <- not working
     // message.mac_addr.data = this->mac_addr; <- not working
-    message.enable_softreset.data = this->enable_softreset; // TODO: Create a ROSparam
+    // message.enable_softreset.data = this->enable_softreset; // TODO: Create a ROSparam
 
     state_publisher->publish(message);
 }

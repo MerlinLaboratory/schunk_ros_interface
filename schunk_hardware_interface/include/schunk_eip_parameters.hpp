@@ -1,13 +1,16 @@
+#ifndef SCHUNK_COMMUNICATION_PARAMS_H
+#define SCHUNK_COMMUNICATION_PARAMS_H
+
 #include "ParameterObject.h"
 
 using eipScanner::cip::CipUint;
 
+// ---------------------------------------------------------------------------- //
+// ---------------------------------- EXPLICIT -------------------------------- //
+// ---------------------------------------------------------------------------- //
 const CipUint CLASS = 0xA2;
 
-// ---------------------------------------------------------------------------- //
-// ---------------------------- POSSIBLE INSTANCES ---------------------------- //
-// ---------------------------------------------------------------------------- //
-
+// --------------------------------- INSTANCES -------------------------------- //
 const CipUint ERROR_CODE_ID = 0x0118;       // The existing error code can be read out with this parameter [ENUM]
 const CipUint WARN_CODE_ID = 0x0120;        // The existing warning code can be read out with this parameter. [ENUM]
 const CipUint ACTUAL_POS_ID = 0x0230;       // This parameter can be used to read out the current actual position in mm. [FLOAT]
@@ -48,16 +51,15 @@ const CipUint SERIAL_NO_NUM_ID = 0x1020;    // The serial number of the module c
 const CipUint MAC_ADDR_ID = 0x1138;         // The MAC address of the module can be read out with this parameter. [UINT8]
 const CipUint ENABLE_SOFTRESET_ID = 0x1330; // The "Restart" function can be enabled with this parameter. [BOOL]
 
-// ---------------------------------------------------------------------------- //
-// ---------------------------- POSSIBLE ATTRIBUTES --------------------------- //
-// ---------------------------------------------------------------------------- //
-
+// --------------------------------- ATTRIBUTES ------------------------------- //
 const CipUint NAME_ATTRIBUTE = 0x1;
 const CipUint VALUE_ATTRIBUTE = 0x5;
 
 // ---------------------------------------------------------------------------- //
-// -------------------------------- OUTPUT DATA ------------------------------- //
+// ---------------------------------- ASSEMBLY -------------------------------- //
 // ---------------------------------------------------------------------------- //
+
+// -------------------------------- OUTPUT DATA ------------------------------- //
 const uint8_t SET_0 = 0;
 const uint8_t SET_1 = 1;
 const uint8_t JOG_MODE_NEGATIVE_BIT_POS = 0;
@@ -78,9 +80,8 @@ const uint8_t RELEASE_FOR_MANUAL_BIT_POS = 5;
 const uint8_t REPEAT_COMMAND_TOGGLE_BIT_POS = 6;
 const uint8_t GRIP_DIRECTION_BIT_POS = 7;
 
-// ---------------------------------------------------------------------------- //
 // -------------------------------- INPUT DATA -------------------------------- //
-// ---------------------------------------------------------------------------- //
+// Byte 0
 const uint8_t READY_FOR_OPERATION_BIT_POS = 0;
 const uint8_t CONTROL_AUTHORITY_FIELDBUS_BIT_POS = 1;
 const uint8_t READY_FOR_SHUTDOWN_BIT_POS = 2;
@@ -90,6 +91,7 @@ const uint8_t COMMAND_RECEIVED_TOGGLE_BIT_POS = 5;
 const uint8_t WARNING_BIT_POS = 6;
 const uint8_t ERROR_BIT_POS = 7;
 
+// Byte 1
 const uint8_t RELEASED_FOR_MANUAL_MOVEMENT_BIT_POS = 0;
 const uint8_t SOFTWARE_LIMIT_REACHED_BIT_POS = 1;
 // const uint8_t _ = 2;
@@ -99,7 +101,11 @@ const uint8_t POSITION_REACHED_BIT_POS = 5;
 const uint8_t WORKPIECE_PRE_GRIP_STARTED_BIT_POS = 6;
 // const uint8_t _ = 7;
 
+// Byte 2
 const uint8_t WORKPIECE_LOST_BIT_POS = 0;
 const uint8_t WRONG_WORKPIECE_GRIPPED_BIT_POS = 1;
 
+// Byte 3
 const uint8_t GRIP_FORCE_AND_POSITION_MAINTAINANCE_ACTIVATED_BIT_POS = 7;
+
+#endif
