@@ -255,5 +255,6 @@ private:
     // ------- Class variables ------- //
     bool runningThread = true;
     std::thread communication_thread;
+    bool repeat_command_toggle_high = false;
 };
 #endif
