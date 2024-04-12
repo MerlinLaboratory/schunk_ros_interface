@@ -13,6 +13,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SchunkGripperMsg.msg"
   "srv/JogTo.srv"
+  "srv/SimpleGrip.srv"
+  "srv/Release.srv"
   DEPENDENCIES std_msgs 
 )
 

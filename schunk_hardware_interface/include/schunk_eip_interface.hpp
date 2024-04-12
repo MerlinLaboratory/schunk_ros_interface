@@ -14,6 +14,8 @@
 #include "std_srvs/srv/trigger.hpp"
 #include "schunk_interface/msg/schunk_gripper_msg.hpp"
 #include "schunk_interface/srv/jog_to.hpp"
+#include "schunk_interface/srv/simple_grip.hpp"
+#include "schunk_interface/srv/release.hpp"
 
 // EIPScanner libraries
 #include "utils/Logger.h"
@@ -42,6 +44,14 @@ using schunk_interface::srv::JogTo;
 using JogToRequestPtr = std::shared_ptr<schunk_interface::srv::JogTo::Request>;
 using JogToResponsePtr = std::shared_ptr<schunk_interface::srv::JogTo::Response>;
 
+using schunk_interface::srv::SimpleGrip;
+using SimpleGripRequestPtr = std::shared_ptr<schunk_interface::srv::SimpleGrip::Request>;
+using SimpleGripResponsePtr = std::shared_ptr<schunk_interface::srv::SimpleGrip::Response>;
+
+using schunk_interface::srv::Release;
+using ReleaseRequestPtr = std::shared_ptr<schunk_interface::srv::Release::Request>;
+using ReleaseResponsePtr = std::shared_ptr<schunk_interface::srv::Release::Response>;
+
 using std_srvs::srv::Trigger;
 using TriggerRequestPtr = std::shared_ptr<std_srvs::srv::Trigger::Request>;
 using TriggerResponsePtr = std::shared_ptr<std_srvs::srv::Trigger::Response>;
@@ -61,6 +71,8 @@ public:
         // Services
         this->acknowledge_srv = this->create_service<Trigger>("acknowledge", std::bind(&SchunkGripper::acknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
         this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::jogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+        this->simple_grip_srv = this->create_service<SimpleGrip>("simple_grip", std::bind(&SchunkGripper::simpleGripSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+        this->release_srv = this->create_service<Release>("release", std::bind(&SchunkGripper::releaseSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
 
         // Timers callbacks
         timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
@@ -109,7 +121,7 @@ public:
             for (auto &byte : data)
                 ss << "[" << std::hex << (int)byte << "]";
         };
-        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data)
+        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](eipScanner::cip::CipUdint, eipScanner::cip::CipUdint, std::vector<uint8_t> data)
         { this->dataReceived = data; };
         eipScanner::IOConnection::CloseHandle closeConnectionHandler = []()
         { Logger(LogLevel::INFO) << "Closed"; };
@@ -128,14 +140,8 @@ public:
         };
         this->communication_thread = std::thread(thread_function);
 
-        // Sending the default vector first
-        std::vector<uint8_t> starting_bytes = this->dataSent;
-        starting_bytes[0] |= 1 << FAST_STOP_BIT_POS;
-        this->SetDataToSend(starting_bytes);
-        std::this_thread::sleep_for(100ms); // TODO: reduce me
-
         // Resetting the gripper to default settings (acknowledge)
-        this->acknowledgeGripper();
+        this->sendAcknowledgeGripper();
     }
 
     ~SchunkGripper()
@@ -165,10 +171,15 @@ private:
 
     // Ros callbacks
     void publishStateUpdate();
+    void acknowledgeSrv(const TriggerRequestPtr, TriggerResponsePtr res);
+    void jogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
+    void simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResponsePtr res);
+    void releaseSrv(const ReleaseRequestPtr req, ReleaseResponsePtr res);
 
     // Functions
     void decodeImplicitData();
-    void acknowledgeGripper();
+    void sendDefaultData();
+    void sendAcknowledgeGripper();
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //
@@ -183,13 +194,11 @@ private:
     // Services (server)
     rclcpp::Service<Trigger>::SharedPtr acknowledge_srv;
     rclcpp::Service<JogTo>::SharedPtr jog_to_srv;
+    rclcpp::Service<SimpleGrip>::SharedPtr simple_grip_srv;
+    rclcpp::Service<Release>::SharedPtr release_srv;
 
     // Timers
     rclcpp::TimerBase::SharedPtr timer;
-
-    // Callbacks
-    void acknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res);
-    void jogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
 
     // ------- Eip variables ------- //
 

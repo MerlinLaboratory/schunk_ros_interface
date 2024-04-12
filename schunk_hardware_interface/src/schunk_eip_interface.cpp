@@ -136,8 +136,18 @@ void SchunkGripper::getExplicitEipData()
 // ---------------------------------- Class Functions --------------------------------- //
 // ------------------------------------------------------------------------------------ //
 
-void SchunkGripper::acknowledgeGripper()
+void SchunkGripper::sendDefaultData()
 {
+    // Sending the default vector first
+    std::vector<uint8_t> starting_bytes = std::vector<uint8_t>(16);
+    SetBit(starting_bytes[0], FAST_STOP_BIT_POS);
+    this->SetDataToSend(starting_bytes);
+    std::this_thread::sleep_for(300ms);
+}
+
+void SchunkGripper::sendAcknowledgeGripper()
+{
+    this->sendDefaultData();
     std::vector<uint8_t> bytes = this->dataSent;
 
     // Resetting the ACKNOWLEDGE_BIT first if necessary
@@ -250,9 +260,9 @@ void SchunkGripper::publishStateUpdate()
     state_publisher->publish(message);
 }
 
-void SchunkGripper::acknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res)
+void SchunkGripper::acknowledgeSrv(const TriggerRequestPtr, TriggerResponsePtr res)
 {
-    this->acknowledgeGripper();
+    this->sendAcknowledgeGripper();
     res->success = true;
 }
 
@@ -317,6 +327,8 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     }
 
     // Setting the bytes in EIP data
+    sendDefaultData();
+
     std::vector<uint8_t> old_bytes = this->dataSent;
     std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
     SetBit(new_bytes[0], FAST_STOP_BIT_POS);
@@ -383,4 +395,83 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     }
 
     res->success = true;
+}
+
+void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResponsePtr res)
+{
+    int8_t gripping_force = req->gripping_force;
+    int8_t gripping_direction = req->gripping_direction;
+    constexpr uint8_t INWARD_GRIP = schunk_interface::srv::SimpleGrip::Request::INWARD;
+    constexpr uint8_t OUTWARD_GRIP = schunk_interface::srv::SimpleGrip::Request::OUTWARD;
+
+    res->success = false;
+
+    // Consistencies checks
+    if (gripping_force < 50 || gripping_force > 100)
+    {
+        std::stringstream ss_debug;
+        ss_debug << "Desired gripping_force is out of bounds. ";
+        ss_debug << "min=" << 50 << "%, max=" << 100 << "%, requested:" << gripping_force << "%";
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
+    if (gripping_direction != INWARD_GRIP && gripping_direction != OUTWARD_GRIP)
+    {
+        std::stringstream ss_debug;
+        ss_debug << "Gripping direction is neither INWARD_GRIP=0 or OUTWARD_GRIP=1";
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
+
+    // Setting the bytes in EIP data
+    this->sendDefaultData();
+
+    std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
+
+    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
+    SetBit(new_bytes[1], GRIP_WORKPIECE_BIT_POS);
+
+    switch (gripping_direction)
+    {
+    case INWARD_GRIP:
+        SetBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
+        break;
+
+    case OUTWARD_GRIP:
+        ResetBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
+        break;
+    }
+
+    for (int index = 0; index < 4; index++)
+    {
+        new_bytes[4 + index] = 0x00; // Setting position to 0
+        new_bytes[8 + index] = 0x00; // Setting velocity to 0
+        new_bytes[12 + index] = gripping_force >> (index * 8) & 0xFF;
+    }
+
+    this->SetDataToSend(new_bytes);
+
+    // TODO: account for possible errors
+
+    res->success = true;
+}
+
+void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
+{
+
+    this->sendDefaultData();
+
+    std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
+
+    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
+    SetBit(new_bytes[1], RELEASE_WORKPIECE_BIT_POS);
+
+    this->SetDataToSend(new_bytes);
+
+    // TODO: account for possible errors
+
+    res->success = true;
+    return;
 }
