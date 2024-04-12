@@ -4,9 +4,9 @@ This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers wit
 
 ## Hardware Dependencies
 
-**OS**: Linux Ubuntu 22.04 
-**ROS**: Humble
+**OS**: Linux Ubuntu 22.04
 **Gripper**: EGK-40-E-I-P
+
 Tested on Ubuntu 22.04 with ROS2 Humble. Soon a Docker file should be available to make it available for ROS1.
 **While the code has been exclusivelly tested with the EGK40 model, support for all other EGK models is not excluded.**
 
@@ -28,7 +28,7 @@ The principal packages are briefly described in the following table:
 
 | Package | Description |
 | --- | --- |
-| [Doc](Doc) | (Contains the necessary documentation to understand how to use the gripper. All documentation can be found on the Schunk website.). |
+| [Doc](Doc) | (Contains the necessary documentation to understand how to use the gripper and the .EDS file for Ethernet/IP Assembly communication. All the files can be found on the Schunk website.). |
 | [schunk_hardware_interface](schunk_hardware_interface) |  Contains the actual code responsible for establishing the connection with the gripper and providing the necessary services and topics.  |
 | [schunk_interface](schunk_interface) | Contains information about the messages and services used by this repository. |
 
