@@ -1,6 +1,26 @@
 #include "../include/schunk_eip_interface.hpp"
 
 // ------------------------------------------------------------------------------------ //
+// --------------------------------- Utils Functions ---------------------------------- //
+// ------------------------------------------------------------------------------------ //
+
+void SetBit(uint8_t& byte, const uint8_t bit_position)
+{
+    byte |= 1 << bit_position;
+}
+
+void ResetBit(uint8_t& byte, const uint8_t bit_position)
+{
+    byte &= ~(1 << bit_position);
+}
+
+bool isBitHigh(uint8_t byte, const uint8_t bit_position)
+{
+    byte >> bit_position & 0x01;
+    return byte? true:false;
+}
+
+// ------------------------------------------------------------------------------------ //
 // ----------------------- Functions for Implicit Communication ----------------------- //
 // ------------------------------------------------------------------------------------ //
 void SchunkGripper::SetDataToSend(std::vector<uint8_t> data)
@@ -112,27 +132,31 @@ void SchunkGripper::getExplicitEipData()
     }
 }
 
-void SetBit(uint8_t& byte, const uint8_t bit_position)
-{
-    byte |= 1 << bit_position;
-}
+// ------------------------------------------------------------------------------------ //
+// ---------------------------------- Class Functions --------------------------------- //
+// ------------------------------------------------------------------------------------ //
 
-void ResetBit(uint8_t& byte, const uint8_t bit_position)
+void SchunkGripper::acknowledgeGripper()
 {
-    byte &= ~(1 << bit_position);
-}
+    std::vector<uint8_t> bytes = this->dataSent;
 
-bool isBitHigh(uint8_t byte, const uint8_t bit_position)
-{
-    byte >> bit_position & 0x01;
-    return byte? true:false;
+    // Resetting the ACKNOWLEDGE_BIT first if necessary
+    if( isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true )
+    {
+        ResetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
+        this->SetDataToSend(bytes);
+        std::this_thread::sleep_for(500ms);
+    }
+
+    SetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
+    this->SetDataToSend(bytes);
 }
 
 // ------------------------------------------------------------------------------------ //
 // ---------------------------------- ROS Functions ----------------------------------- //
 // ------------------------------------------------------------------------------------ //
 
-void SchunkGripper::DecodeImplicitData()
+void SchunkGripper::decodeImplicitData()
 {
     // Check Schunk Documentation Pag 17/120
     // Deconding Status
@@ -183,7 +207,7 @@ void SchunkGripper::DecodeImplicitData()
 
 void SchunkGripper::publishStateUpdate()
 {
-    this->DecodeImplicitData();
+    this->decodeImplicitData();
 
     // Filling msg and publishing it
     schunk_interface::msg::SchunkGripperMsg message;
@@ -224,25 +248,13 @@ void SchunkGripper::publishStateUpdate()
     state_publisher->publish(message);
 }
 
-void SchunkGripper::AcknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res)
+void SchunkGripper::acknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res)
 {
-    std::vector<uint8_t> bytes = this->dataSent;
-
-    // Resetting the ACKNOWLEDGE_BIT first if necessary
-    if( isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true )
-    {
-        ResetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
-        this->SetDataToSend(bytes);
-        std::this_thread::sleep_for(500ms);
-    }
-
-    SetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
-    this->SetDataToSend(bytes);
-
+    this->acknowledgeGripper();
     res->success = true;
 }
 
-void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
+void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 {
     int32_t desired_position = static_cast<int32_t>(req->position.data * 1000);
     int32_t desired_velocity = static_cast<int32_t>(req->velocity.data * 1000);
@@ -274,7 +286,7 @@ void SchunkGripper::JogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     // Check if gripper is ready for operation
     if(!this->ready_for_operation_bit)
     {
-        RCLCPP_ERROR(this->get_logger(), "Ready for operation bit");
+        RCLCPP_ERROR(this->get_logger(), "Gripper is not ready for operation bit");
         res->success = false;
         return;
     }

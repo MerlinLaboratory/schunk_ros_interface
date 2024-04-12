@@ -27,9 +27,9 @@
 
 using namespace std::chrono_literals;
 using eipScanner::cip::CipBool;
+using eipScanner::cip::CipDint;
 using eipScanner::cip::CipReal;
 using eipScanner::cip::CipUsint;
-using eipScanner::cip::CipDint;
 using eipScanner::utils::Logger;
 using eipScanner::utils::LogLevel;
 
@@ -58,8 +58,8 @@ public:
         state_publisher = this->create_publisher<SchunkGripperMsg>(node_name + "_state", 10);
 
         // Services
-        this->acknowledge_srv = this->create_service<Trigger>("acknowledge", std::bind(&SchunkGripper::AcknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
-        this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::JogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+        this->acknowledge_srv = this->create_service<Trigger>("acknowledge", std::bind(&SchunkGripper::acknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+        this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::jogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
 
         // Timers callbacks
         timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
@@ -100,11 +100,6 @@ public:
 
         this->io = this->connectionManager.forwardOpen(si, parameters);
 
-        std::vector<uint8_t> bytes = std::vector<uint8_t>(16);
-        bytes[0] |= SET_1 << FAST_STOP_BIT_POS;
-        bytes[0] |= SET_1 << ACKNOWLEDGE_BIT_POS;
-        this->SetDataToSend(bytes);
-
         // Setting the handlers
         eipScanner::IOConnection::SendDataHandle
             sendDataHandler = [](std::vector<uint8_t> data)
@@ -112,7 +107,6 @@ public:
             std::ostringstream ss;
             for (auto &byte : data)
                 ss << "[" << std::hex << (int)byte << "]";
-            // Logger(LogLevel::INFO) << "Sent: " << ss.str();
         };
         eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](auto realTimeHeader, auto sequence, auto data)
         { this->dataReceived = data; };
@@ -132,6 +126,15 @@ public:
             Logger(LogLevel::ERROR) << "Connection has been closed";
         };
         this->communication_thread = std::thread(thread_function);
+
+        // Sending the default vector first
+        std::vector<uint8_t> starting_bytes = this->dataSent;
+        starting_bytes[0] |= 1 << FAST_STOP_BIT_POS;
+        this->SetDataToSend(starting_bytes);
+        std::this_thread::sleep_for(100ms); // TODO: reduce me
+
+        // Resetting the gripper to default settings (acknowledge)
+        this->acknowledgeGripper();
     }
 
     ~SchunkGripper()
@@ -163,8 +166,8 @@ private:
     void publishStateUpdate();
 
     // Functions
-    // eipScanner::cip::MessageRouterResponse readEipData(eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name);
-    void DecodeImplicitData();
+    void decodeImplicitData();
+    void acknowledgeGripper();
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //
@@ -184,8 +187,8 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
 
     // Callbacks
-    void AcknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res);
-    void JogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
+    void acknowledgeSrv(const TriggerRequestPtr req, TriggerResponsePtr res);
+    void jogToSrv(const JogToRequestPtr req, JogToResponsePtr res);
 
     // ------- Eip variables ------- //
 
@@ -239,7 +242,6 @@ private:
     CipDint workpiece_gripped_bit;
     CipDint position_reached_bit;
     CipDint workpiece_pre_grip_started_bit;
-
     CipDint workpiece_lost_bit;
     CipDint wrong_workpiece_gripped_bit;
 
