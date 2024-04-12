@@ -180,6 +180,8 @@ private:
     void decodeImplicitData();
     void sendDefaultData();
     void sendAcknowledgeGripper();
+    bool WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream& debug_ss);
+    bool WaitForActionFinish(int32_t& feedback_bit, int timeInSeconds, std::stringstream& debug_ss);
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //

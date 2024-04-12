@@ -162,6 +162,51 @@ void SchunkGripper::sendAcknowledgeGripper()
     this->SetDataToSend(bytes);
 }
 
+bool SchunkGripper::WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream& debug_ss)
+{
+    std::chrono::duration<int> timeout(timeInSeconds);
+
+    auto start = std::chrono::system_clock::now();
+    while (prev_command_received_toggle_bit == this->command_received_toggle_bit)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
+
+        if (elapesed_time > timeout)
+        {
+            debug_ss << "Command not received by gripper";
+            return false;
+        }
+
+        std::this_thread::sleep_for(300ms);
+    }
+
+    return true;
+}
+
+bool SchunkGripper::WaitForActionFinish(int32_t& feedback_bit, int timeInSeconds, std::stringstream& debug_ss)
+{
+    std::chrono::duration<int> timeout(timeInSeconds);
+
+    auto start = std::chrono::system_clock::now();
+    while (feedback_bit == false)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
+
+        if (elapesed_time > timeout)
+        {
+            debug_ss << "Cannot finish within timeout";
+            RCLCPP_ERROR(this->get_logger(), debug_ss.str().c_str());
+            return false;
+        }
+
+        std::this_thread::sleep_for(300ms);
+    }
+
+    return true;
+}
+
 // ------------------------------------------------------------------------------------ //
 // ---------------------------------- ROS Functions ----------------------------------- //
 // ------------------------------------------------------------------------------------ //
@@ -350,48 +395,25 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     }
 
     // Saving current state of input bits that are going to change after Send
-    uint8_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
+    int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
 
     this->SetDataToSend(new_bytes);
 
     // Waiting from EIP that command has been received
-    std::chrono::duration<int> timeout(10);
-
-    auto start = std::chrono::system_clock::now();
-    while (prev_command_received_toggle_bit == this->command_received_toggle_bit)
+    std::stringstream ss_debug;
+    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
     {
-        auto now = std::chrono::system_clock::now();
-        auto elapesed_time = now - start;
-
-        if (elapesed_time > timeout)
-        {
-            std::stringstream ss_debug;
-            ss_debug << "Command not received by gripper";
-            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
-            res->debug = ss_debug.str();
-            return;
-        }
-
-        std::this_thread::sleep_for(300ms);
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
     }
 
-    // Waiting for the command to be finished target position reached setting the control bit "stop"
-    start = std::chrono::system_clock::now();
-    while (this->position_reached_bit == false)
+    // Waiting for the command to be finished target position reached
+    if (this->WaitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
     {
-        auto now = std::chrono::system_clock::now();
-        auto elapesed_time = now - start;
-
-        if (elapesed_time > timeout)
-        {
-            std::stringstream ss_debug;
-            ss_debug << "Cannot finish withing timeout";
-            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
-            res->debug = ss_debug.str();
-            return;
-        }
-
-        std::this_thread::sleep_for(300ms);
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
     }
 
     res->success = true;
@@ -451,15 +473,32 @@ void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResp
         new_bytes[12 + index] = gripping_force >> (index * 8) & 0xFF;
     }
 
+    int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
     this->SetDataToSend(new_bytes);
 
-    // TODO: account for possible errors
+    // Waiting from EIP that command has been received
+    std::stringstream ss_debug;
+    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
+    {
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
+
+    // Waiting for the command to be finished
+    if (this->WaitForActionFinish(this->workpiece_gripped_bit, 10, ss_debug) == false)
+    {
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
 
     res->success = true;
 }
 
 void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
 {
+    res->success = false;
 
     this->sendDefaultData();
 
@@ -470,7 +509,25 @@ void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
 
     this->SetDataToSend(new_bytes);
 
-    // TODO: account for possible errors
+    int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
+    this->SetDataToSend(new_bytes);
+
+    // Waiting from EIP that command has been received
+    std::stringstream ss_debug;
+    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
+    {
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
+
+    // Waiting for the command to be finished
+    if (this->WaitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
+    {
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
 
     res->success = true;
     return;
