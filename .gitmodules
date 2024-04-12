@@ -1,0 +1,3 @@
+[submodule "schunk_hardware_interface/EIPScanner"]
+	path = schunk_hardware_interface/EIPScanner
+	url = https://github.com/nimbuscontrols/EIPScanner.git
