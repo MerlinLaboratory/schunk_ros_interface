@@ -21,9 +21,6 @@ Tested on Ubuntu 22.04 with ROS2 Humble. Soon a Docker file should be available 
 
 ## Repository Structure
 
-This repository is organized into three main folders:
-
-
 The principal packages are briefly described in the following table:
 
 | Package | Description |
