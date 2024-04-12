@@ -12,7 +12,7 @@ Tested on Ubuntu 22.04 with ROS2 Humble. Soon a Docker file should be available 
 
 ## Features
 
-- **Gripper State Logging**: Access real-time information about the gripper's state through a dedicated ROS topic.
+- **Gripper State Logging**: Access information about the gripper's state through a dedicated ROS topic.
 - **Control Services**: Utilize ROS services to command various gripper actions, such as:
   - `jog_to`: Move the gripper to a specified position.
   - `release`: Release any grasped object.
