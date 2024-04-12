@@ -4,12 +4,12 @@
 // --------------------------------- Utils Functions ---------------------------------- //
 // ------------------------------------------------------------------------------------ //
 
-void SetBit(uint8_t& byte, const uint8_t bit_position)
+void SetBit(uint8_t &byte, const uint8_t bit_position)
 {
     byte |= 1 << bit_position;
 }
 
-void ResetBit(uint8_t& byte, const uint8_t bit_position)
+void ResetBit(uint8_t &byte, const uint8_t bit_position)
 {
     byte &= ~(1 << bit_position);
 }
@@ -17,7 +17,7 @@ void ResetBit(uint8_t& byte, const uint8_t bit_position)
 bool isBitHigh(uint8_t byte, const uint8_t bit_position)
 {
     byte >> bit_position & 0x01;
-    return byte? true:false;
+    return byte ? true : false;
 }
 
 // ------------------------------------------------------------------------------------ //
@@ -141,7 +141,7 @@ void SchunkGripper::acknowledgeGripper()
     std::vector<uint8_t> bytes = this->dataSent;
 
     // Resetting the ACKNOWLEDGE_BIT first if necessary
-    if( isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true )
+    if (isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true)
     {
         ResetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
         this->SetDataToSend(bytes);
@@ -213,12 +213,14 @@ void SchunkGripper::publishStateUpdate()
     schunk_interface::msg::SchunkGripperMsg message;
     message.actual_pos = this->actual_pos;
 
-    if(this->warning_bit){
+    if (this->warning_bit)
+    {
         message.warn_code = this->warning_code;
         message.warn_msg = mapper_warning.at(this->warning_code);
     }
 
-    if(this->error_bit){
+    if (this->error_bit)
+    {
         message.error_code = this->error_code;
         message.error_msg = mapper_error.at(this->error_code);
     }
@@ -256,79 +258,105 @@ void SchunkGripper::acknowledgeSrv(const TriggerRequestPtr req, TriggerResponseP
 
 void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 {
-    int32_t desired_position = static_cast<int32_t>(req->position.data * 1000);
-    int32_t desired_velocity = static_cast<int32_t>(req->velocity.data * 1000);
-    uint8_t motion_type = req->motion_type.data;
+    int32_t desired_position = static_cast<int32_t>(req->position * 1000);
+    int32_t desired_velocity = static_cast<int32_t>(req->velocity * 1000);
+    uint8_t motion_type = req->motion_type;
+    auto ABSOLUTE_MOTION = schunk_interface::srv::JogTo::Request::ABSOLUTE_MOTION;
+    auto RELATIVE_MOTION = schunk_interface::srv::JogTo::Request::RELATIVE_MOTION;
 
     res->success = false;
 
-    // Initial check
-    if (desired_position < this->min_pos * 1000 || desired_position > this->max_pos * 1000)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Desired position is out of bounds");
-        RCLCPP_ERROR(this->get_logger(), "min=%f and max=%f", this->min_pos, this->max_pos);
-        return;
-    }
-    if (desired_velocity < this->min_vel * 1000 || desired_velocity > this->max_vel * 1000)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Desired velocity is out of bounds");
-        RCLCPP_ERROR(this->get_logger(), "min=%f and max=%f", this->min_vel, this->max_vel);
-        return;
-    }
-    auto ABSOLUTE_MOTION = schunk_interface::srv::JogTo::Request::ABSOLUTE_MOTION;
-    auto RELATIVE_MOTION = schunk_interface::srv::JogTo::Request::RELATIVE_MOTION;
+    // Consistencies checks
     if (motion_type != ABSOLUTE_MOTION && motion_type != RELATIVE_MOTION)
     {
         RCLCPP_ERROR(this->get_logger(), "Only available motions are ABSOLUTE or RELATIVE");
         return;
     }
-
-    // Check if gripper is ready for operation
-    if(!this->ready_for_operation_bit)
+    if (motion_type == ABSOLUTE_MOTION)
     {
-        RCLCPP_ERROR(this->get_logger(), "Gripper is not ready for operation bit");
+        if (desired_position < this->min_pos * 1000 || desired_position > this->max_pos * 1000)
+        {
+            std::stringstream ss_debug;
+            ss_debug << "Desired position is out of bounds. ";
+            ss_debug << "min=" << this->min_pos << ", max=" << this->max_pos << ", requested:" << desired_position / 1000;
+            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+            res->debug = ss_debug.str();
+            return;
+        }
+    }
+    else
+    {
+        int32_t relative_position = this->actual_pos * 1000 + desired_position;
+        if (relative_position < this->min_pos * 1000 || relative_position > this->max_pos * 1000)
+        {
+            std::stringstream ss_debug;
+            ss_debug << "Desired position is out of bounds. ";
+            ss_debug << "min=" << this->min_pos << ", max=" << this->max_pos << ", requested:" << relative_position / 1000;
+            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+            res->debug = ss_debug.str();
+            return;
+        }
+    }
+    if (desired_velocity < this->min_vel * 1000 || desired_velocity > this->max_vel * 1000)
+    {
+        std::stringstream ss_debug;
+        ss_debug << "Desired velocity is out of bounds. ";
+        ss_debug << "min=" << this->min_vel << ", max=" << this->max_vel << ", requested:" << desired_velocity / 1000;
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+        res->debug = ss_debug.str();
+        return;
+    }
+    if (!this->ready_for_operation_bit)
+    {
+        std::stringstream ss_debug;
+        ss_debug << "Gripper is not ready for operation bit";
+        RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->success = false;
+        res->debug = ss_debug.str();
         return;
     }
 
     // Setting the bytes in EIP data
-    std::vector<uint8_t> output_bytes = std::vector<uint8_t>(16);
-    SetBit(output_bytes[0], FAST_STOP_BIT_POS);
-    SetBit(output_bytes[1], motion_type == ABSOLUTE_MOTION? MOVE_TO_ABSOLUTE_POSITION_BIT_POS:MOVE_TO_RELATIVE_POSITION_BIT_POS);
+    std::vector<uint8_t> old_bytes = this->dataSent;
+    std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
+    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
+    SetBit(new_bytes[1], motion_type == ABSOLUTE_MOTION ? MOVE_TO_ABSOLUTE_POSITION_BIT_POS : MOVE_TO_RELATIVE_POSITION_BIT_POS);
 
-    std::vector<uint8_t> commands_bytes = {output_bytes.begin(), output_bytes.begin() + 4};
-    std::vector<uint8_t> commands_dataSent = {this->dataSent.begin(), this->dataSent.begin() + 4};
-    
-    if(commands_dataSent == commands_bytes) // Whether the command is the same toggle the repeat command toggle -> see documentation for clarifications
+    std::vector<uint8_t> commands_bytes_new = {new_bytes.begin(), new_bytes.begin() + 4};
+    std::vector<uint8_t> commands_bytes_old = {old_bytes.begin(), old_bytes.begin() + 4};
+
+    if (commands_bytes_new == commands_bytes_old) // Whether the command is the same toggle the repeat command toggle -> see documentation for clarifications
     {
-        this->repeat_command_toggle_high? ResetBit(output_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS) : SetBit(output_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS);
-        this->repeat_command_toggle_high =! this->repeat_command_toggle_high;
+        this->repeat_command_toggle_high ? ResetBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS) : SetBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS);
+        this->repeat_command_toggle_high = !this->repeat_command_toggle_high;
     }
 
     for (int index = 0; index < 4; index++)
     {
-        output_bytes[4 + index] = desired_position >> (index * 8) & 0xFF;
-        output_bytes[8 + index] = desired_velocity >> (index * 8) & 0xFF;
+        new_bytes[4 + index] = desired_position >> (index * 8) & 0xFF;
+        new_bytes[8 + index] = desired_velocity >> (index * 8) & 0xFF;
     }
 
     // Saving current state of input bits that are going to change after Send
     uint8_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
 
-    this->SetDataToSend(output_bytes);
+    this->SetDataToSend(new_bytes);
 
     // Waiting from EIP that command has been received
     std::chrono::duration<int> timeout(10);
 
     auto start = std::chrono::system_clock::now();
-    while(prev_command_received_toggle_bit == this->command_received_toggle_bit)
+    while (prev_command_received_toggle_bit == this->command_received_toggle_bit)
     {
         auto now = std::chrono::system_clock::now();
         auto elapesed_time = now - start;
 
-        if(elapesed_time > timeout)
+        if (elapesed_time > timeout)
         {
-            RCLCPP_ERROR(this->get_logger(), "Command not received by gripper");
-            res->success = false;
+            std::stringstream ss_debug;
+            ss_debug << "Command not received by gripper";
+            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+            res->debug = ss_debug.str();
             return;
         }
 
@@ -337,15 +365,17 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 
     // Waiting for the command to be finished target position reached setting the control bit "stop"
     start = std::chrono::system_clock::now();
-    while(this->position_reached_bit == false)
+    while (this->position_reached_bit == false)
     {
         auto now = std::chrono::system_clock::now();
         auto elapesed_time = now - start;
 
-        if(elapesed_time > timeout)
+        if (elapesed_time > timeout)
         {
-            RCLCPP_ERROR(this->get_logger(), "Cannot finish withing timeout");
-            res->success = false;
+            std::stringstream ss_debug;
+            ss_debug << "Cannot finish withing timeout";
+            RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
+            res->debug = ss_debug.str();
             return;
         }
 

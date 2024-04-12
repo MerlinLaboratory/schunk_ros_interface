@@ -51,7 +51,8 @@ class SchunkGripper : public rclcpp::Node
 public:
     SchunkGripper(std::string node_name, std::string ip) : Node(node_name)
     {
-        // ROS
+        // --- ROS --- //
+        // Callback Group
         this->callback_group_reentrant = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
         // Publishers
@@ -64,7 +65,7 @@ public:
         // Timers callbacks
         timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
 
-        // Ethernet/IP
+        // --- Ethernet/IP --- //
         // Setting Loggin level
         Logger::setLogLevel(LogLevel::INFO);
 
