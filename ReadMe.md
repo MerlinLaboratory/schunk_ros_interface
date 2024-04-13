@@ -1,4 +1,4 @@
-# ROS2 Humble Wrapper for EGK Schunk Grippers
+# ROS2 Humble drivers for EGK Schunk Grippers
 
 This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
 
@@ -31,7 +31,7 @@ The principal packages are briefly described in the following table:
 
 ## Usage
 
-### Prerequisites
+### Prerequisites and Dependencies
 ROS2 Humble needs to be installed and configured in your computer.
 
 The only other dependency that the repo requires is [EIPScanner](https://github.com/nimbuscontrols/EIPScanner). Just clone it and build it (it is not necessary to put this repo in your ROS workspace):
@@ -46,32 +46,29 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
   ```
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
   ```
-  otherwise place it inside your .bashrc file.
+  otherwise place it inside your .bashrc file to avoid doing this step everytime you open a new terminal where you launch the schunk_node.
 
 ### Installation
-1. Clone the repository into your ROS2 workspace:
+1. Clone the repository into your ROS2 workspace and build it:
     ```
     git clone https://github.com/MerlinLaboratory/schunk_ros_interface.git
-    ```
-2. Build the package using colcon:
-    ```
     colcon build
     ```
 
-### Usage
+### Usage + examples
 1. **Launch the Node**: Launch the node to start communication with the gripper.
     ```
-    ros2 run ... ...
+    ros2 run schunk_hardware_interface schunk_gripper_node
     ```
 
 2. **Access Gripper State**: Subscribe to the gripper state topic to receive updates on the gripper's status.
     ```
-    ros2 topic echo ...
+    ros2 topic echo TODO
     ```
 
 3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example:
     ```
-    ros2 service call ... ...
+    ros2 service call TODO
     ```
 
 ## Future Development
