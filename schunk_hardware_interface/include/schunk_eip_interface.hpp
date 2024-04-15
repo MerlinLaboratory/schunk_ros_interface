@@ -65,6 +65,10 @@ public:
         // Callback Group
         this->callback_group_reentrant = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
+        // Parameters
+        this->declare_parameter("gripper_ip", std::string("0.0.0.0"));
+        this->declare_parameter("gripper_name", std::string("gripper"));
+
         // Publishers
         state_publisher = this->create_publisher<SchunkGripperMsg>(node_name + "_state", 10);
 
@@ -180,8 +184,8 @@ private:
     void decodeImplicitData();
     void sendDefaultData();
     void sendAcknowledgeGripper();
-    bool WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream& debug_ss);
-    bool WaitForActionFinish(int32_t& feedback_bit, int timeInSeconds, std::stringstream& debug_ss);
+    bool WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream &debug_ss);
+    bool WaitForActionFinish(int32_t &feedback_bit, int timeInSeconds, std::stringstream &debug_ss);
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //

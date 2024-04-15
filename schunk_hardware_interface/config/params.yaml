@@ -1,0 +1,5 @@
+schunk:
+  gripper:
+    ros__parameters:
+      gripper_name: "egk_40"
+      gripper_ip: "192.168.125.160"
