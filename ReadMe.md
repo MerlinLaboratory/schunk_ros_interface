@@ -4,11 +4,12 @@ This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers wit
 
 ## Hardware Dependencies
 
-**OS**: Linux Ubuntu 22.04
-**Gripper**: EGK-40-E-I-P
+**OS**: Linux Ubuntu \
+**Gripper**: EGK-40-EI-M-B
 
-Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. Soon a Docker file should be available to make it available for ROS1.
-**While the code has been exclusivelly tested with the EGK40 model, support for all other EGK models is not excluded.**
+Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. \
+Soon a Docker file should be available to make it available for ROS1.\
+While the code has been **exclusivelly tested** with the **EGK40** model, support for all other EGK models is not **excluded**.
 
 ## Features
 
@@ -17,7 +18,8 @@ Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. Soon a 
   - `jog_to`: Move the gripper to a specified position.
   - `release`: Release any grasped object.
   - `simple_grip`: Perform a simple gripping action.
-  Additional information about each service can be found within the `schunk_interface` package.
+
+Additional information about each service can be found within the `schunk_interface` package.
 
 ## Repository Structure
 
@@ -72,7 +74,8 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
     ```
 
 # Troubleshooting
-In case the gripper does not communicates with your system, try to allow UDP connection throw port 2222 with the following command (pay attenction that this needs to be done everytime the computer is restarted):
+### No Data received from gripper/ gripper does not respond to commands
+In case the gripper does not communicates with your system, try to allow UDP connection through port 2222 with the following command (pay attenction that this needs to be done everytime the computer is restarted):
 ```
 sudo iptables -A OUTPUT -p udp -m udp --sport 2222 -j ACCEPT
 sudo iptables -I INPUT -p udp --dport 2222 -j ACCEPT
