@@ -1,4 +1,4 @@
-# ROS2 Humble drivers for EGK Schunk Grippers
+# ROS2 drivers for EGK Schunk Grippers
 
 This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
 
@@ -8,7 +8,7 @@ This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers wit
 **Gripper**: EGK-40-EI-M-B
 
 Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. \
-Soon a Docker file should be available to make it available for ROS1.\
+Soon a Docker file with a bridge will be available to make the repo work with ROS1.\
 While the code has been **exclusivelly tested** with the **EGK40** model, support for all other EGK models is not **excluded**.
 
 ## Features
