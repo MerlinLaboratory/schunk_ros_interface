@@ -3,3 +3,12 @@ schunk:
     ros__parameters:
       gripper_name: "egk_40"
       gripper_ip: "192.168.125.160"
+
+      grp_prehold_time: 0.0
+      wp_lost_dst: 0.0
+      wp_release_delta: 0.0
+      grp_pos_margin: 0.0
+      grp_prepos_delta: 0.0
+      min_pos: 0.0  # [mm]
+      max_pos: 50.0 # [mm]
+      zero_pos_ofs: 0.0 # [mm]

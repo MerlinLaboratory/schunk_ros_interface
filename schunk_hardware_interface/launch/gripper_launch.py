@@ -27,7 +27,7 @@ def launch_setup(context, *args, **kwargs):
             executable='schunk_gripper_node',
             name="gripper",
             parameters=[config],
-            output="both"
+            output="screen"
         )
     
     return [gripper_node]

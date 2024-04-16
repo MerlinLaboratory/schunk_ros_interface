@@ -59,95 +59,7 @@ using TriggerResponsePtr = std::shared_ptr<std_srvs::srv::Trigger::Response>;
 class SchunkGripper : public rclcpp::Node
 {
 public:
-    SchunkGripper(std::string node_name, std::string ip) : Node(node_name)
-    {
-        // --- ROS --- //
-        // Callback Group
-        this->callback_group_reentrant = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
-
-        // Parameters
-        this->declare_parameter("gripper_ip", std::string("0.0.0.0"));
-        this->declare_parameter("gripper_name", std::string("gripper"));
-
-        // Publishers
-        state_publisher = this->create_publisher<SchunkGripperMsg>(node_name + "_state", 10);
-
-        // Services
-        this->acknowledge_srv = this->create_service<Trigger>("acknowledge", std::bind(&SchunkGripper::acknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
-        this->jog_to_srv = this->create_service<JogTo>("jog_to", std::bind(&SchunkGripper::jogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
-        this->simple_grip_srv = this->create_service<SimpleGrip>("simple_grip", std::bind(&SchunkGripper::simpleGripSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
-        this->release_srv = this->create_service<Release>("release", std::bind(&SchunkGripper::releaseSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
-
-        // Timers callbacks
-        timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
-
-        // --- Ethernet/IP --- //
-        // Setting Loggin level
-        Logger::setLogLevel(LogLevel::INFO);
-
-        // Enstablish explicit connection and getting the initial data
-        this->si = std::make_shared<eipScanner::SessionInfo>(ip, 0xAF12);
-        this->getExplicitEipData();
-
-        // Enstablish implicit connection (check EDS file)
-        eipScanner::cip::connectionManager::ConnectionParameters parameters;
-
-        parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::CLASS1;
-        parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::TRIG_CYCLIC;
-        parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::OWNED;
-
-        parameters.connectionTimeoutMultiplier = 3;
-
-        parameters.t2oRealTimeFormat = false;
-        parameters.t2oRPI = 10000;
-        parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::P2P;
-        parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::SCHEDULED_PRIORITY;
-        parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::FIXED;
-        parameters.t2oNetworkConnectionParams |= 16;
-
-        parameters.o2tRealTimeFormat = true;
-        parameters.o2tRPI = 10000;
-        parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::P2P;
-        parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::SCHEDULED_PRIORITY;
-        parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::FIXED;
-        parameters.o2tNetworkConnectionParams |= 16;
-
-        parameters.connectionPath = {0x20, 0x04, 0x24, 0x00, 0x2C, 0x96, 0x2C, 0x64};
-        parameters.originatorVendorId = 900;
-
-        this->io = this->connectionManager.forwardOpen(si, parameters);
-
-        // Setting the handlers
-        eipScanner::IOConnection::SendDataHandle
-            sendDataHandler = [](std::vector<uint8_t> data)
-        {
-            std::ostringstream ss;
-            for (auto &byte : data)
-                ss << "[" << std::hex << (int)byte << "]";
-        };
-        eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](eipScanner::cip::CipUdint, eipScanner::cip::CipUdint, std::vector<uint8_t> data)
-        { this->dataReceived = data; };
-        eipScanner::IOConnection::CloseHandle closeConnectionHandler = []()
-        { Logger(LogLevel::INFO) << "Closed"; };
-        this->SetHandlers(sendDataHandler, receiveHandler, closeConnectionHandler);
-
-        // Launching the communication in a different thread
-        auto
-            thread_function = [this]()
-        {
-            while (this->connectionManager.hasOpenConnections() && runningThread)
-            {
-                connectionManager.handleConnections(std::chrono::milliseconds(100)); // TODO: make timeout a parameter
-                std::this_thread::sleep_for(100ms);
-            }
-            Logger(LogLevel::ERROR) << "Connection has been closed";
-        };
-        this->communication_thread = std::thread(thread_function);
-
-        // Resetting the gripper to default settings (acknowledge)
-        this->sendAcknowledgeGripper();
-    }
-
+    SchunkGripper();
     ~SchunkGripper()
     {
         Logger(LogLevel::INFO) << "Destructor called";
@@ -165,11 +77,11 @@ public:
 
 private:
     // Getters
-    void getExplicitEipData();
+    void readExplicitData();
 
     // Setters
-    void SetDataToSend(std::vector<uint8_t> data);
-    void SetHandlers(eipScanner::IOConnection::SendDataHandle sendHandler,
+    void setDataToSend(std::vector<uint8_t> data);
+    void setHandlers(eipScanner::IOConnection::SendDataHandle sendHandler,
                      eipScanner::IOConnection::ReceiveDataHandle receiveHandler,
                      eipScanner::IOConnection::CloseHandle closeHandler);
 
@@ -180,12 +92,15 @@ private:
     void simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResponsePtr res);
     void releaseSrv(const ReleaseRequestPtr req, ReleaseResponsePtr res);
 
+    // Parameters
+    void declareParameters();
+
     // Functions
-    void decodeImplicitData();
+    void readImplicitData();
     void sendDefaultData();
     void sendAcknowledgeGripper();
-    bool WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream &debug_ss);
-    bool WaitForActionFinish(int32_t &feedback_bit, int timeInSeconds, std::stringstream &debug_ss);
+    bool waitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream &debug_ss);
+    bool waitForActionFinish(int32_t &feedback_bit, int timeInSeconds, std::stringstream &debug_ss);
 
     // --------------------------------------------------------------------------------- //
     // ----------------------------------- Variables ----------------------------------- //
@@ -218,27 +133,23 @@ private:
     std::vector<uint8_t> dataReceived = std::vector<uint8_t>(16);
 
     // Explicit data
-    CipReal actual_vel;
-    eipScanner::cip::CipWord grp_prehold_time;
-    CipReal dead_load_kg;
-    std::vector<CipReal> tool_cent_point;
-    std::vector<CipReal> cent_of_mass;
-    CipReal wp_lost_dst;
-    CipReal wp_release_delta;
-    CipReal grp_pos_margin;
-    CipReal max_phys_stroke;
-    CipReal grp_prepos_delta;
-    CipReal min_pos;
-    CipReal max_pos;
-    CipReal zero_pos_ofs;
-    CipReal min_vel;
-    CipReal max_vel;
-    CipReal max_grp_vel;
-    CipReal min_grp_force;
-    CipReal max_grp_force;
-    std::vector<eipScanner::cip::CipByte> serial_no_num;
-    CipUsint mac_addr;
-    CipBool enable_softreset;
+    eipScanner::cip::CipWord grp_prehold_time; // Read and write
+    CipReal dead_load_kg; // Read
+    std::vector<double> tool_cent_point; // Read
+    std::vector<double> cent_of_mass; // Read
+    CipReal wp_lost_dst; // Read and write
+    CipReal wp_release_delta; // Read and write
+    CipReal grp_pos_margin; // Read and write
+    CipReal max_phys_stroke; // Read
+    CipReal grp_prepos_delta; // Read and write
+    CipReal min_pos; // Read and write
+    CipReal max_pos; // Read and write
+    CipReal zero_pos_ofs; // Read and write
+    CipReal min_vel; // Read
+    CipReal max_vel; // Read
+    CipReal max_grp_vel; // Read
+    CipReal min_grp_force; // Read
+    CipReal max_grp_force; // Read
 
     // ------------ Implicit data ------------ //
 
@@ -271,6 +182,8 @@ private:
     CipDint additional_code;
 
     // ------- Class variables ------- //
+    std::string node_name;
+    std::string gripper_ip;
     bool runningThread = true;
     std::thread communication_thread;
     bool repeat_command_toggle_high = false;

@@ -4,12 +4,12 @@
 // --------------------------------- Utils Functions ---------------------------------- //
 // ------------------------------------------------------------------------------------ //
 
-void SetBit(uint8_t &byte, const uint8_t bit_position)
+void setBit(uint8_t &byte, const uint8_t bit_position)
 {
     byte |= 1 << bit_position;
 }
 
-void ResetBit(uint8_t &byte, const uint8_t bit_position)
+void resetBit(uint8_t &byte, const uint8_t bit_position)
 {
     byte &= ~(1 << bit_position);
 }
@@ -23,21 +23,8 @@ bool isBitHigh(uint8_t byte, const uint8_t bit_position)
 // ------------------------------------------------------------------------------------ //
 // ----------------------- Functions for Implicit Communication ----------------------- //
 // ------------------------------------------------------------------------------------ //
-void SchunkGripper::SetDataToSend(std::vector<uint8_t> data)
-{
-    if (auto ptr = this->io.lock())
-    {
-        this->dataSent = data;
-        ptr->setDataToSend(data);
-    }
-    else
-    {
-        Logger(LogLevel::ERROR) << "Failed to open connection";
-        throw std::runtime_error("Failed to open connection");
-    }
-}
 
-void SchunkGripper::SetHandlers(eipScanner::IOConnection::SendDataHandle sendHandler,
+void SchunkGripper::setHandlers(eipScanner::IOConnection::SendDataHandle sendHandler,
                                 eipScanner::IOConnection::ReceiveDataHandle receiveHandler,
                                 eipScanner::IOConnection::CloseHandle closeHandler)
 {
@@ -57,161 +44,21 @@ void SchunkGripper::SetHandlers(eipScanner::IOConnection::SendDataHandle sendHan
     }
 }
 
-// ------------------------------------------------------------------------------------ //
-// ----------------------- Functions for Explicit Communication ----------------------- //
-// ------------------------------------------------------------------------------------ //
-
-template <typename dataType>
-dataType ReadExplicitEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
+void SchunkGripper::setDataToSend(std::vector<uint8_t> data)
 {
-    // Read Parameter Class Descriptor
-    eipScanner::MessageRouter messageRouter;
-    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::GET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name));
-
-    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    if (auto ptr = this->io.lock())
     {
-        Logger(LogLevel::ERROR) << "Failed to read";
-        logGeneralAndAdditionalStatus(response);
-
-        throw std::runtime_error("Failed to read attribute id:" + std::to_string(attribute_name) + " instance id:" + std::to_string(instance_id));
+        this->dataSent = data;
+        ptr->setDataToSend(data);
     }
-
-    eipScanner::utils::Buffer buffer = eipScanner::utils::Buffer(response.getData());
-    dataType data;
-    buffer >> data;
-
-    return data;
-}
-
-// TODO: place it in a service and check that it works (turn it into a template?)
-void WriteExplicitEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
-{
-    // Read Parameter Class Descriptor
-    eipScanner::MessageRouter messageRouter;
-    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::SET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name));
-
-    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    else
     {
-        Logger(LogLevel::ERROR) << "Failed to write";
-        logGeneralAndAdditionalStatus(response);
-
-        throw std::runtime_error("Failed to write attribute id:" + std::to_string(attribute_name) + " instance id:" + std::to_string(instance_id));
-    }
-
-    return;
-}
-
-void SchunkGripper::getExplicitEipData()
-{
-    try
-    {
-        this->grp_prehold_time = ReadExplicitEipData<eipScanner::cip::CipWord>(this->si, GRP_PREHOLD_TIME_ID, VALUE_ATTRIBUTE);
-        this->dead_load_kg = ReadExplicitEipData<CipReal>(this->si, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE);
-        // this->tool_cent_point = ReadExplicitEipData<std::vector<CipReal>>(this->si, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE); <-- not working
-        // this->cent_of_mass = ReadExplicitEipData<std::vector<CipReal>>(this->si, CENT_OF_MASS_ID, VALUE_ATTRIBUTE); <-- not working
-        this->wp_lost_dst = ReadExplicitEipData<CipReal>(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE);
-        this->wp_release_delta = ReadExplicitEipData<CipReal>(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE);
-        this->grp_pos_margin = ReadExplicitEipData<CipReal>(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE);
-        this->max_phys_stroke = ReadExplicitEipData<CipReal>(this->si, MAX_PHYS_STROKE_ID, VALUE_ATTRIBUTE);
-        this->grp_prepos_delta = ReadExplicitEipData<CipReal>(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE);
-        this->min_pos = ReadExplicitEipData<CipReal>(this->si, MIN_POS_ID, VALUE_ATTRIBUTE);
-        this->max_pos = ReadExplicitEipData<CipReal>(this->si, MAX_POS_ID, VALUE_ATTRIBUTE);
-        this->zero_pos_ofs = ReadExplicitEipData<CipReal>(this->si, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE);
-        this->min_vel = ReadExplicitEipData<CipReal>(this->si, MIN_VEL_ID, VALUE_ATTRIBUTE);
-        this->max_vel = ReadExplicitEipData<CipReal>(this->si, MAX_VEL_ID, VALUE_ATTRIBUTE);
-        this->max_grp_vel = ReadExplicitEipData<CipReal>(this->si, MAX_GRP_VEL_ID, VALUE_ATTRIBUTE);
-        this->min_grp_force = ReadExplicitEipData<CipReal>(this->si, MIN_GRP_FORCE_ID, VALUE_ATTRIBUTE);
-        this->max_grp_force = ReadExplicitEipData<CipReal>(this->si, MAX_GRP_FORCE_ID, VALUE_ATTRIBUTE);
-        // this->serial_no_num = ReadExplicitEipData<std::vector<eipScanner::cip::CipByte>>(this->si_async, SERIAL_NO_NUM_ID, VALUE_ATTRIBUTE); <-- not working
-        this->mac_addr = ReadExplicitEipData<CipReal>(this->si, MAC_ADDR_ID, VALUE_ATTRIBUTE);
-        this->enable_softreset = ReadExplicitEipData<CipReal>(this->si, ENABLE_SOFTRESET_ID, VALUE_ATTRIBUTE);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
+        Logger(LogLevel::ERROR) << "Failed to open connection";
+        throw std::runtime_error("Failed to open connection");
     }
 }
 
-// ------------------------------------------------------------------------------------ //
-// ---------------------------------- Class Functions --------------------------------- //
-// ------------------------------------------------------------------------------------ //
-
-void SchunkGripper::sendDefaultData()
-{
-    // Sending the default vector first
-    std::vector<uint8_t> starting_bytes = std::vector<uint8_t>(16);
-    SetBit(starting_bytes[0], FAST_STOP_BIT_POS);
-    this->SetDataToSend(starting_bytes);
-    std::this_thread::sleep_for(300ms);
-}
-
-void SchunkGripper::sendAcknowledgeGripper()
-{
-    this->sendDefaultData();
-    std::vector<uint8_t> bytes = this->dataSent;
-
-    // Resetting the ACKNOWLEDGE_BIT first if necessary
-    if (isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true)
-    {
-        ResetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
-        this->SetDataToSend(bytes);
-        std::this_thread::sleep_for(500ms);
-    }
-
-    SetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
-    this->SetDataToSend(bytes);
-}
-
-bool SchunkGripper::WaitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream& debug_ss)
-{
-    std::chrono::duration<int> timeout(timeInSeconds);
-
-    auto start = std::chrono::system_clock::now();
-    while (prev_command_received_toggle_bit == this->command_received_toggle_bit)
-    {
-        auto now = std::chrono::system_clock::now();
-        auto elapesed_time = now - start;
-
-        if (elapesed_time > timeout)
-        {
-            debug_ss << "Command not received by gripper";
-            return false;
-        }
-
-        std::this_thread::sleep_for(300ms);
-    }
-
-    return true;
-}
-
-bool SchunkGripper::WaitForActionFinish(int32_t& feedback_bit, int timeInSeconds, std::stringstream& debug_ss)
-{
-    std::chrono::duration<int> timeout(timeInSeconds);
-
-    auto start = std::chrono::system_clock::now();
-    while (feedback_bit == false)
-    {
-        auto now = std::chrono::system_clock::now();
-        auto elapesed_time = now - start;
-
-        if (elapesed_time > timeout)
-        {
-            debug_ss << "Cannot finish within timeout";
-            RCLCPP_ERROR(this->get_logger(), debug_ss.str().c_str());
-            return false;
-        }
-
-        std::this_thread::sleep_for(300ms);
-    }
-
-    return true;
-}
-
-// ------------------------------------------------------------------------------------ //
-// ---------------------------------- ROS Functions ----------------------------------- //
-// ------------------------------------------------------------------------------------ //
-
-void SchunkGripper::decodeImplicitData()
+void SchunkGripper::readImplicitData()
 {
     // Check Schunk Documentation Pag 17/120
     // Deconding Status
@@ -260,9 +107,250 @@ void SchunkGripper::decodeImplicitData()
     this->additional_code = diagnostic_pos_bytes[3];
 }
 
+// ------------------------------------------------------------------------------------ //
+// ----------------------- Functions for Explicit Communication ----------------------- //
+// ------------------------------------------------------------------------------------ //
+
+template <typename dataType>
+dataType getExplicitData(std::shared_ptr<eipScanner::SessionInfo> si_async, eipScanner::cip::CipUint instance_id, eipScanner::cip::CipUint attribute_name)
+{
+    // Read Parameter Class Descriptor
+    eipScanner::MessageRouter messageRouter;
+    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::GET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name));
+
+    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    {
+        Logger(LogLevel::ERROR) << "Failed to read";
+        logGeneralAndAdditionalStatus(response);
+
+        throw std::runtime_error("Failed to read attribute id:" + std::to_string(attribute_name) + " instance id:" + std::to_string(instance_id));
+    }
+
+    eipScanner::utils::Buffer buffer = eipScanner::utils::Buffer(response.getData());
+    dataType data;
+    buffer >> data;
+
+    return data;
+}
+
+void SchunkGripper::readExplicitData()
+{
+    try
+    {
+        this->dead_load_kg = getExplicitData<CipReal>(this->si, DEAD_LOAD_KG_ID, VALUE_ATTRIBUTE);
+        this->max_phys_stroke = getExplicitData<CipReal>(this->si, MAX_PHYS_STROKE_ID, VALUE_ATTRIBUTE);
+        this->min_vel = getExplicitData<CipReal>(this->si, MIN_VEL_ID, VALUE_ATTRIBUTE);
+        this->max_vel = getExplicitData<CipReal>(this->si, MAX_VEL_ID, VALUE_ATTRIBUTE);
+        this->max_grp_vel = getExplicitData<CipReal>(this->si, MAX_GRP_VEL_ID, VALUE_ATTRIBUTE);
+        this->min_grp_force = getExplicitData<CipReal>(this->si, MIN_GRP_FORCE_ID, VALUE_ATTRIBUTE);
+        this->max_grp_force = getExplicitData<CipReal>(this->si, MAX_GRP_FORCE_ID, VALUE_ATTRIBUTE);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+
+void writeExplicitEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, CipUint instance_id, CipUint attribute_name, CipReal data)
+{
+    std::vector<uint8_t> serialised_data(4);
+    // memcpy(serialised_data.data(), &data, sizeof(CipReal));
+
+    // Read Parameter Class Descriptor
+    eipScanner::MessageRouter messageRouter;
+    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::SET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name), serialised_data);
+
+    if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
+    {
+        Logger(LogLevel::ERROR) << "Failed to write";
+        logGeneralAndAdditionalStatus(response);
+
+        throw std::runtime_error("Failed to write attribute id:" + std::to_string(attribute_name) + " instance id:" + std::to_string(instance_id));
+    }
+
+    return;
+}
+
+// ------------------------------------------------------------------------------------ //
+// ---------------------------------- Class Functions --------------------------------- //
+// ------------------------------------------------------------------------------------ //
+
+void SchunkGripper::sendDefaultData()
+{
+    // Sending the default vector first
+    std::vector<uint8_t> starting_bytes = std::vector<uint8_t>(16);
+    setBit(starting_bytes[0], FAST_STOP_BIT_POS);
+    this->setDataToSend(starting_bytes);
+    std::this_thread::sleep_for(300ms);
+}
+
+void SchunkGripper::sendAcknowledgeGripper()
+{
+    this->sendDefaultData();
+    std::vector<uint8_t> bytes = this->dataSent;
+
+    // Resetting the ACKNOWLEDGE_BIT first if necessary
+    if (isBitHigh(bytes[0], ACKNOWLEDGE_BIT_POS) == true)
+    {
+        resetBit(bytes[0], ACKNOWLEDGE_BIT_POS);
+        this->setDataToSend(bytes);
+        std::this_thread::sleep_for(500ms);
+    }
+
+    setBit(bytes[0], ACKNOWLEDGE_BIT_POS);
+    this->setDataToSend(bytes);
+}
+
+bool SchunkGripper::waitForCommandReceivedToggle(int32_t prev_command_received_toggle_bit, int timeInSeconds, std::stringstream &debug_ss)
+{
+    std::chrono::duration<int> timeout(timeInSeconds);
+
+    auto start = std::chrono::system_clock::now();
+    while (prev_command_received_toggle_bit == this->command_received_toggle_bit)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
+
+        if (elapesed_time > timeout)
+        {
+            debug_ss << "Command not received by gripper";
+            return false;
+        }
+
+        std::this_thread::sleep_for(300ms);
+    }
+
+    return true;
+}
+
+bool SchunkGripper::waitForActionFinish(int32_t &feedback_bit, int timeInSeconds, std::stringstream &debug_ss)
+{
+    std::chrono::duration<int> timeout(timeInSeconds);
+
+    auto start = std::chrono::system_clock::now();
+    while (feedback_bit == false)
+    {
+        auto now = std::chrono::system_clock::now();
+        auto elapesed_time = now - start;
+
+        if (elapesed_time > timeout)
+        {
+            debug_ss << "Cannot finish within timeout";
+            RCLCPP_ERROR(this->get_logger(), debug_ss.str().c_str());
+            return false;
+        }
+
+        std::this_thread::sleep_for(300ms);
+    }
+
+    return true;
+}
+
+// ------------------------------------------------------------------------------------ //
+// ---------------------------------- ROS Functions ----------------------------------- //
+// ------------------------------------------------------------------------------------ //
+
+void SchunkGripper::declareParameters()
+{
+    this->readExplicitData();
+
+    // Declaration
+    rcl_interfaces::msg::ParameterDescriptor param_desc;
+    param_desc.read_only = false;
+    param_desc.description = "This parameter can be used to read and write the time span for the re-gripping. [ms]";
+    this->declare_parameter("grp_prehold_time", 0.0, param_desc);
+    this->grp_prehold_time = this->get_parameter("grp_prehold_time").as_double();
+
+    param_desc.read_only = true;
+    param_desc.description = "The mass of the module can be read out and written with this parameter. [kg]";
+    this->declare_parameter("dead_load_kg", this->dead_load_kg, param_desc);
+
+    // param_desc.read_only = true;
+    // param_desc.description = "The tool center point (TCP) of the module can be read out and written with this parameter. x [mm], y [mm], z [mm], a [°], b [°], c [°]";
+    // this->declare_parameter("tool_cent_point", std::vector<int>(6), param_desc);
+
+    // param_desc.read_only = true;
+    // param_desc.description = "The center of mass and the mass moments of inertia of the module can be read out with this parameter. a [kg*m2], b [kg*m2], c [kg*m2]";
+    // this->declare_parameter("cent_of_mass", std::vector<int>(6), param_desc);
+
+    param_desc.read_only = false;
+    param_desc.description = "This parameter can be used to set the traverse path from which a workpiece loss is detected. [mm]";
+    this->declare_parameter("wp_lost_dst", 0.0, param_desc);
+    this->wp_lost_dst = this->get_parameter("wp_lost_dst").as_double();
+
+    param_desc.read_only = false;
+    param_desc.description = "With this parameter the relative position delta between the gripping position and release position can be read out and written. [mm]";
+    this->declare_parameter("wp_release_delta", 0.0, param_desc);
+    this->wp_release_delta = this->get_parameter("wp_release_delta").as_double();
+
+    param_desc.read_only = false;
+    param_desc.description = "With this parameter the tolerance value of the workpiece position window can be read and written. [mm]";
+    this->declare_parameter("grp_pos_margin", 0.0, param_desc);
+    this->grp_pos_margin = this->get_parameter("grp_pos_margin").as_double();
+
+    param_desc.read_only = true;
+    param_desc.description = "With this parameter the maximum physical stroke of the module can be read. The parameter value does not take into account any stroke restrictions resulting from the fingers used. [mm]";
+    this->declare_parameter("max_phys_stroke", this->max_phys_stroke, param_desc);
+
+    param_desc.read_only = false;
+    param_desc.description = "With this parameter the relative position delta between the pre-position and gripping position can be read out and written. [rad]";
+    this->declare_parameter("grp_prepos_delta", 0.0, param_desc);
+    this->grp_prepos_delta = this->get_parameter("grp_prepos_delta").as_double();
+
+    param_desc.read_only = false;
+    param_desc.description = "The smallest position value that can be approached by the module can be read out and written with this parameter. [mm]";
+    this->declare_parameter("min_pos", 0.0, param_desc);
+    this->min_pos = this->get_parameter("min_pos").as_double();
+
+    param_desc.read_only = false;
+    param_desc.description = "The largest position value that can be approached by the module can be read out and written with this parameter. [mm]";
+    this->declare_parameter("max_pos", 0.0, param_desc);
+    this->max_pos = this->get_parameter("max_pos").as_double();
+
+    param_desc.read_only = false;
+    param_desc.description = "The zero point can be adapted to the application with this parameter. [mm]";
+    this->declare_parameter("zero_pos_ofs", 0.0, param_desc);
+    this->zero_pos_ofs = this->get_parameter("zero_pos_ofs").as_double();
+
+    param_desc.read_only = true;
+    param_desc.description = "The minimum movement/gripping velocity with which the module can be moved can be read out with this parameter. [mm/s]";
+    this->declare_parameter("min_vel", this->min_vel, param_desc);
+
+    param_desc.read_only = true;
+    param_desc.description = "The maximum positioning speed with which the module can be moved can be read out with this parameter. [mm/s]";
+    this->declare_parameter("max_vel", this->max_vel, param_desc);
+
+    param_desc.read_only = true;
+    param_desc.description = "The maximum gripping velocity with which the module can be moved can be read out with this parameter. [mm/s]";
+    this->declare_parameter("max_grp_vel", this->max_grp_vel, param_desc);
+
+    param_desc.read_only = true;
+    param_desc.description = "The minimum gripping force can be read out with this parameter. [N]";
+    this->declare_parameter("min_grp_force", this->min_grp_force, param_desc);
+
+    param_desc.read_only = true;
+    param_desc.description = "The maximum gripping force can be read out with this parameter. [N]";
+    this->declare_parameter("max_grp_force", this->max_grp_force, param_desc);
+
+    try
+    {
+        // writeExplicitEipData(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE, this->wp_lost_dst);
+        // writeExplicitEipData(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE, this->wp_release_delta);
+        // writeExplicitEipData(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE, this->grp_pos_margin);
+        // writeExplicitEipData(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE, this->grp_prepos_delta);
+        // writeExplicitEipData(this->si, MIN_POS_ID, VALUE_ATTRIBUTE, this->min_pos);
+        // writeExplicitEipData(this->si, MAX_POS_ID, VALUE_ATTRIBUTE, this->max_pos);
+        // writeExplicitEipData(this->si, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE, this->zero_pos_ofs);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+
 void SchunkGripper::publishStateUpdate()
 {
-    this->decodeImplicitData();
+    this->readImplicitData();
 
     // Filling msg and publishing it
     schunk_interface::msg::SchunkGripperMsg message;
@@ -279,28 +367,6 @@ void SchunkGripper::publishStateUpdate()
         message.error_code = this->error_code;
         message.error_msg = mapper_error.at(this->error_code);
     }
-
-    // message.actual_vel.data = this->actual_vel;
-    // message.grp_prehold_time.data = this->grp_prehold_time; // TODO: Create a ROSparam
-    // message.dead_load_kg.data = this->dead_load_kg;         // TODO: Create a ROSparam
-    // message.tool_cent_point.data = this->tool_cent_point; <- not working
-    // message.cent_of_mass.data = this->cent_of_mass; <- not working
-    // message.wp_lost_dst.data = this->wp_lost_dst;           // TODO: Create a ROSparam
-    // message.wp_release_delta.data = this->wp_release_delta; // TODO: Create a ROSparam
-    // message.grp_pos_margin.data = this->grp_pos_margin;     // TODO: Create a ROSparam
-    // message.max_phys_stroke.data = this->max_phys_stroke;   // TODO: Create a ROSparam
-    // message.grp_prepos_delta.data = this->grp_prepos_delta; // TODO: Create a ROSparam
-    // message.min_pos.data = this->min_pos;                   // TODO: Create a ROSparam
-    // message.max_pos.data = this->max_pos;                   // TODO: Create a ROSparam
-    // message.zero_pos_ofs.data = this->zero_pos_ofs;         // TODO: Create a ROSparam
-    // message.min_vel.data = this->min_vel;                   // TODO: Create a ROSparam
-    // message.max_vel.data = this->max_vel;                   // TODO: Create a ROSparam
-    // message.max_grp_vel.data = this->max_grp_vel;           // TODO: Create a ROSparam
-    // message.min_grp_force.data = this->min_grp_force;       // TODO: Create a ROSparam
-    // message.max_grp_force.data = this->max_grp_force;       // TODO: Create a ROSparam
-    // message.serial_no_num.data = this->serial_no_num; <- not working
-    // message.mac_addr.data = this->mac_addr; <- not working
-    // message.enable_softreset.data = this->enable_softreset; // TODO: Create a ROSparam
 
     state_publisher->publish(message);
 }
@@ -376,15 +442,15 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
 
     std::vector<uint8_t> old_bytes = this->dataSent;
     std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
-    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
-    SetBit(new_bytes[1], motion_type == ABSOLUTE_MOTION ? MOVE_TO_ABSOLUTE_POSITION_BIT_POS : MOVE_TO_RELATIVE_POSITION_BIT_POS);
+    setBit(new_bytes[0], FAST_STOP_BIT_POS);
+    setBit(new_bytes[1], motion_type == ABSOLUTE_MOTION ? MOVE_TO_ABSOLUTE_POSITION_BIT_POS : MOVE_TO_RELATIVE_POSITION_BIT_POS);
 
     std::vector<uint8_t> commands_bytes_new = {new_bytes.begin(), new_bytes.begin() + 4};
     std::vector<uint8_t> commands_bytes_old = {old_bytes.begin(), old_bytes.begin() + 4};
 
     if (commands_bytes_new == commands_bytes_old) // Whether the command is the same toggle the repeat command toggle -> see documentation for clarifications
     {
-        this->repeat_command_toggle_high ? ResetBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS) : SetBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS);
+        this->repeat_command_toggle_high ? resetBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS) : setBit(new_bytes[0], REPEAT_COMMAND_TOGGLE_BIT_POS);
         this->repeat_command_toggle_high = !this->repeat_command_toggle_high;
     }
 
@@ -397,11 +463,11 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     // Saving current state of input bits that are going to change after Send
     int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
 
-    this->SetDataToSend(new_bytes);
+    this->setDataToSend(new_bytes);
 
     // Waiting from EIP that command has been received
     std::stringstream ss_debug;
-    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
+    if (this->waitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -409,7 +475,7 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     }
 
     // Waiting for the command to be finished target position reached
-    if (this->WaitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
+    if (this->waitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -452,17 +518,17 @@ void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResp
 
     std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
 
-    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
-    SetBit(new_bytes[1], GRIP_WORKPIECE_BIT_POS);
+    setBit(new_bytes[0], FAST_STOP_BIT_POS);
+    setBit(new_bytes[1], GRIP_WORKPIECE_BIT_POS);
 
     switch (gripping_direction)
     {
     case INWARD_GRIP:
-        SetBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
+        setBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
         break;
 
     case OUTWARD_GRIP:
-        ResetBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
+        resetBit(new_bytes[0], GRIP_DIRECTION_BIT_POS);
         break;
     }
 
@@ -474,11 +540,11 @@ void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResp
     }
 
     int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
-    this->SetDataToSend(new_bytes);
+    this->setDataToSend(new_bytes);
 
     // Waiting from EIP that command has been received
     std::stringstream ss_debug;
-    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
+    if (this->waitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -486,7 +552,7 @@ void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResp
     }
 
     // Waiting for the command to be finished
-    if (this->WaitForActionFinish(this->workpiece_gripped_bit, 10, ss_debug) == false)
+    if (this->waitForActionFinish(this->workpiece_gripped_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -504,17 +570,17 @@ void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
 
     std::vector<uint8_t> new_bytes = std::vector<uint8_t>(16);
 
-    SetBit(new_bytes[0], FAST_STOP_BIT_POS);
-    SetBit(new_bytes[1], RELEASE_WORKPIECE_BIT_POS);
+    setBit(new_bytes[0], FAST_STOP_BIT_POS);
+    setBit(new_bytes[1], RELEASE_WORKPIECE_BIT_POS);
 
-    this->SetDataToSend(new_bytes);
+    this->setDataToSend(new_bytes);
 
     int32_t prev_command_received_toggle_bit = this->command_received_toggle_bit;
-    this->SetDataToSend(new_bytes);
+    this->setDataToSend(new_bytes);
 
     // Waiting from EIP that command has been received
     std::stringstream ss_debug;
-    if (this->WaitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
+    if (this->waitForCommandReceivedToggle(prev_command_received_toggle_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -522,7 +588,7 @@ void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
     }
 
     // Waiting for the command to be finished
-    if (this->WaitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
+    if (this->waitForActionFinish(this->position_reached_bit, 10, ss_debug) == false)
     {
         RCLCPP_ERROR(this->get_logger(), ss_debug.str().c_str());
         res->debug = ss_debug.str();
@@ -531,4 +597,104 @@ void SchunkGripper::releaseSrv(const ReleaseRequestPtr, ReleaseResponsePtr res)
 
     res->success = true;
     return;
+}
+
+// ------------------------------------------------------------------------------------ //
+// ----------------------------------- Constructor ------------------------------------ //
+// ------------------------------------------------------------------------------------ //
+
+SchunkGripper::SchunkGripper() : Node("gripper")
+{
+    rcl_interfaces::msg::ParameterDescriptor param_desc;
+    param_desc.read_only = false;
+
+    this->declare_parameter("gripper_ip", std::string("0.0.0.0"), param_desc);
+    this->declare_parameter("gripper_name", std::string("gripper"), param_desc);
+
+    this->node_name = this->get_parameter("gripper_name").as_string();
+    this->gripper_ip = this->get_parameter("gripper_ip").as_string();
+
+    // --- Ethernet/IP --- //
+    // Setting Loggin level
+    Logger::setLogLevel(LogLevel::INFO);
+
+    // Enstablish explicit connection and getting the initial data
+    this->si = std::make_shared<eipScanner::SessionInfo>(this->gripper_ip, 0xAF12);
+
+    // Enstablish implicit connection (check EDS file)
+    eipScanner::cip::connectionManager::ConnectionParameters parameters;
+
+    parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::CLASS1;
+    parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::TRIG_CYCLIC;
+    parameters.transportTypeTrigger |= eipScanner::cip::connectionManager::NetworkConnectionParams::OWNED;
+
+    parameters.connectionTimeoutMultiplier = 3;
+
+    parameters.t2oRealTimeFormat = false;
+    parameters.t2oRPI = 10000;
+    parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::P2P;
+    parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::SCHEDULED_PRIORITY;
+    parameters.t2oNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::FIXED;
+    parameters.t2oNetworkConnectionParams |= 16;
+
+    parameters.o2tRealTimeFormat = true;
+    parameters.o2tRPI = 10000;
+    parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::P2P;
+    parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::SCHEDULED_PRIORITY;
+    parameters.o2tNetworkConnectionParams |= eipScanner::cip::connectionManager::NetworkConnectionParams::FIXED;
+    parameters.o2tNetworkConnectionParams |= 16;
+
+    parameters.connectionPath = {0x20, 0x04, 0x24, 0x00, 0x2C, 0x96, 0x2C, 0x64};
+    parameters.originatorVendorId = 900;
+
+    this->io = this->connectionManager.forwardOpen(si, parameters);
+
+    // Setting the handlers
+    eipScanner::IOConnection::SendDataHandle
+        sendDataHandler = [](std::vector<uint8_t> data)
+    {
+        std::ostringstream ss;
+        for (auto &byte : data)
+            ss << "[" << std::hex << (int)byte << "]";
+    };
+    eipScanner::IOConnection::ReceiveDataHandle receiveHandler = [this](eipScanner::cip::CipUdint, eipScanner::cip::CipUdint, std::vector<uint8_t> data)
+    { this->dataReceived = data; };
+    eipScanner::IOConnection::CloseHandle closeConnectionHandler = []()
+    { Logger(LogLevel::INFO) << "Closed"; };
+    this->setHandlers(sendDataHandler, receiveHandler, closeConnectionHandler);
+
+    // Launching the communication in a different thread
+    auto
+        thread_function = [this]()
+    {
+        while (this->connectionManager.hasOpenConnections() && runningThread)
+        {
+            connectionManager.handleConnections(std::chrono::milliseconds(100)); // TODO: make timeout a parameter
+            std::this_thread::sleep_for(100ms);
+        }
+        Logger(LogLevel::ERROR) << "Connection has been closed";
+    };
+    this->communication_thread = std::thread(thread_function);
+
+    // --- ROS --- //
+    // Callback Group
+    this->callback_group_reentrant = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
+    // Parameters declaration + getting
+    this->declareParameters();
+
+    // Publishers
+    state_publisher = this->create_publisher<SchunkGripperMsg>(this->node_name + "_state", 10);
+
+    // Services
+    this->acknowledge_srv = this->create_service<Trigger>(this->node_name + "/acknowledge", std::bind(&SchunkGripper::acknowledgeSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+    this->jog_to_srv = this->create_service<JogTo>(this->node_name + "/jog_to", std::bind(&SchunkGripper::jogToSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+    this->simple_grip_srv = this->create_service<SimpleGrip>(this->node_name + "/simple_grip", std::bind(&SchunkGripper::simpleGripSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+    this->release_srv = this->create_service<Release>(this->node_name + "/release", std::bind(&SchunkGripper::releaseSrv, this, _1, _2), rmw_qos_profile_services_default, this->callback_group_reentrant);
+
+    // Timers callbacks
+    timer = this->create_wall_timer(100ms, std::bind(&SchunkGripper::publishStateUpdate, this));
+
+    // Resetting the gripper to default settings (acknowledge)
+    this->sendAcknowledgeGripper();
 }
