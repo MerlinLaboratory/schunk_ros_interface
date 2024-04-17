@@ -151,14 +151,15 @@ void SchunkGripper::readExplicitData()
     }
 }
 
-void writeExplicitEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, CipUint instance_id, CipUint attribute_name, CipReal data)
+void writeExplicitEipData(std::shared_ptr<eipScanner::SessionInfo> si_async, CipUint instance_id, CipUint attribute_name, CipReal input_data)
 {
-    std::vector<uint8_t> serialised_data(4);
-    // memcpy(serialised_data.data(), &data, sizeof(CipReal));
+    std::vector<uint8_t> serialised_data(sizeof(CipReal));
+    memcpy(serialised_data.data(), &input_data, sizeof(CipReal));
 
     // Read Parameter Class Descriptor
     eipScanner::MessageRouter messageRouter;
-    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::SET_ATTRIBUTE_SINGLE, eipScanner::cip::EPath(CLASS, instance_id, attribute_name), serialised_data);
+    eipScanner::cip::EPath path(CLASS, instance_id, attribute_name);
+    eipScanner::cip::MessageRouterResponse response = messageRouter.sendRequest(si_async, eipScanner::cip::ServiceCodes::SET_ATTRIBUTE_SINGLE, path, serialised_data);
 
     if (response.getGeneralStatusCode() != eipScanner::cip::GeneralStatusCodes::SUCCESS)
     {
@@ -334,13 +335,13 @@ void SchunkGripper::declareParameters()
 
     try
     {
-        // writeExplicitEipData(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE, this->wp_lost_dst);
-        // writeExplicitEipData(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE, this->wp_release_delta);
-        // writeExplicitEipData(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE, this->grp_pos_margin);
-        // writeExplicitEipData(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE, this->grp_prepos_delta);
-        // writeExplicitEipData(this->si, MIN_POS_ID, VALUE_ATTRIBUTE, this->min_pos);
-        // writeExplicitEipData(this->si, MAX_POS_ID, VALUE_ATTRIBUTE, this->max_pos);
-        // writeExplicitEipData(this->si, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE, this->zero_pos_ofs);
+        writeExplicitEipData(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE, this->wp_lost_dst);
+        writeExplicitEipData(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE, this->wp_release_delta);
+        writeExplicitEipData(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE, this->grp_pos_margin);
+        writeExplicitEipData(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE, this->grp_prepos_delta);
+        writeExplicitEipData(this->si, MIN_POS_ID, VALUE_ATTRIBUTE, this->min_pos);
+        writeExplicitEipData(this->si, MAX_POS_ID, VALUE_ATTRIBUTE, this->max_pos);
+        writeExplicitEipData(this->si, ZERO_POS_OFS_ID, VALUE_ATTRIBUTE, this->zero_pos_ofs);
     }
     catch (const std::exception &e)
     {
@@ -616,7 +617,7 @@ SchunkGripper::SchunkGripper() : Node("gripper")
 
     // --- Ethernet/IP --- //
     // Setting Loggin level
-    Logger::setLogLevel(LogLevel::INFO);
+    Logger::setLogLevel(LogLevel::WARNING);
 
     // Enstablish explicit connection and getting the initial data
     this->si = std::make_shared<eipScanner::SessionInfo>(this->gripper_ip, 0xAF12);
