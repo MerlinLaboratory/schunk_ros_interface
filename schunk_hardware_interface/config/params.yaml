@@ -15,5 +15,5 @@ schunk:
 
 # TO BE NOTICED: if you input a value that does not make sense (it is outside the system boundaries), 
 # the code will throw a communication error due to the fact the gripper rejects the requested value.
-# These boundaries values can be found in the documentation of your gripper (in mu case that I have an EGK-40: pag 54/120 )
+# These boundaries values can be found in the documentation of your gripper (in my case that I have an EGK-40: pag 54/120 )
 # so pay attention before saying it my code's fault that it does not work :)
