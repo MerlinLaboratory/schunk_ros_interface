@@ -12,10 +12,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_srvs/srv/trigger.hpp"
-#include "schunk_interface/msg/schunk_gripper_msg.hpp"
-#include "schunk_interface/srv/jog_to.hpp"
-#include "schunk_interface/srv/simple_grip.hpp"
-#include "schunk_interface/srv/release.hpp"
+#include "schunk_interfaces/msg/schunk_gripper_msg.hpp"
+#include "schunk_interfaces/srv/jog_to.hpp"
+#include "schunk_interfaces/srv/simple_grip.hpp"
+#include "schunk_interfaces/srv/release.hpp"
 
 // EIPScanner libraries
 #include "utils/Logger.h"
@@ -38,19 +38,19 @@ using eipScanner::utils::LogLevel;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-using schunk_interface::msg::SchunkGripperMsg;
+using schunk_interfaces::msg::SchunkGripperMsg;
 
-using schunk_interface::srv::JogTo;
-using JogToRequestPtr = std::shared_ptr<schunk_interface::srv::JogTo::Request>;
-using JogToResponsePtr = std::shared_ptr<schunk_interface::srv::JogTo::Response>;
+using schunk_interfaces::srv::JogTo;
+using JogToRequestPtr = std::shared_ptr<schunk_interfaces::srv::JogTo::Request>;
+using JogToResponsePtr = std::shared_ptr<schunk_interfaces::srv::JogTo::Response>;
 
-using schunk_interface::srv::SimpleGrip;
-using SimpleGripRequestPtr = std::shared_ptr<schunk_interface::srv::SimpleGrip::Request>;
-using SimpleGripResponsePtr = std::shared_ptr<schunk_interface::srv::SimpleGrip::Response>;
+using schunk_interfaces::srv::SimpleGrip;
+using SimpleGripRequestPtr = std::shared_ptr<schunk_interfaces::srv::SimpleGrip::Request>;
+using SimpleGripResponsePtr = std::shared_ptr<schunk_interfaces::srv::SimpleGrip::Response>;
 
-using schunk_interface::srv::Release;
-using ReleaseRequestPtr = std::shared_ptr<schunk_interface::srv::Release::Request>;
-using ReleaseResponsePtr = std::shared_ptr<schunk_interface::srv::Release::Response>;
+using schunk_interfaces::srv::Release;
+using ReleaseRequestPtr = std::shared_ptr<schunk_interfaces::srv::Release::Request>;
+using ReleaseResponsePtr = std::shared_ptr<schunk_interfaces::srv::Release::Response>;
 
 using std_srvs::srv::Trigger;
 using TriggerRequestPtr = std::shared_ptr<std_srvs::srv::Trigger::Request>;
@@ -110,7 +110,7 @@ private:
     rclcpp::CallbackGroup::SharedPtr callback_group_reentrant;
 
     // Publishers
-    rclcpp::Publisher<schunk_interface::msg::SchunkGripperMsg>::SharedPtr state_publisher;
+    rclcpp::Publisher<schunk_interfaces::msg::SchunkGripperMsg>::SharedPtr state_publisher;
 
     // Services (server)
     rclcpp::Service<Trigger>::SharedPtr acknowledge_srv;

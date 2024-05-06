@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>schunk_interface</name>
+  <name>schunk_interfaces</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>This pkg contains msgs and srvs of the schunk pkg</description>
   <maintainer email="niccolo.lucci@polimi.it">vscode</maintainer>
   <license>Apache-2.0</license>
 

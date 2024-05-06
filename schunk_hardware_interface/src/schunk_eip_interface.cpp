@@ -354,7 +354,7 @@ void SchunkGripper::publishStateUpdate()
     this->readImplicitData();
 
     // Filling msg and publishing it
-    schunk_interface::msg::SchunkGripperMsg message;
+    schunk_interfaces::msg::SchunkGripperMsg message;
     message.actual_pos = this->actual_pos;
 
     if (this->warning_bit)
@@ -383,8 +383,8 @@ void SchunkGripper::jogToSrv(const JogToRequestPtr req, JogToResponsePtr res)
     int32_t desired_position = static_cast<int32_t>(req->position * 1000);
     int32_t desired_velocity = static_cast<int32_t>(req->velocity * 1000);
     uint8_t motion_type = req->motion_type;
-    auto ABSOLUTE_MOTION = schunk_interface::srv::JogTo::Request::ABSOLUTE_MOTION;
-    auto RELATIVE_MOTION = schunk_interface::srv::JogTo::Request::RELATIVE_MOTION;
+    auto ABSOLUTE_MOTION = schunk_interfaces::srv::JogTo::Request::ABSOLUTE_MOTION;
+    auto RELATIVE_MOTION = schunk_interfaces::srv::JogTo::Request::RELATIVE_MOTION;
 
     res->success = false;
 
@@ -490,8 +490,8 @@ void SchunkGripper::simpleGripSrv(const SimpleGripRequestPtr req, SimpleGripResp
 {
     int8_t gripping_force = req->gripping_force;
     int8_t gripping_direction = req->gripping_direction;
-    constexpr uint8_t INWARD_GRIP = schunk_interface::srv::SimpleGrip::Request::INWARD;
-    constexpr uint8_t OUTWARD_GRIP = schunk_interface::srv::SimpleGrip::Request::OUTWARD;
+    constexpr uint8_t INWARD_GRIP = schunk_interfaces::srv::SimpleGrip::Request::INWARD;
+    constexpr uint8_t OUTWARD_GRIP = schunk_interfaces::srv::SimpleGrip::Request::OUTWARD;
 
     res->success = false;
 
