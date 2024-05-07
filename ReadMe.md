@@ -8,7 +8,7 @@ This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers wit
 **Gripper**: EGK-40-EI-M-B
 
 Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. \
-Soon a Docker file with a bridge will be available to make the repo work with ROS1.\
+For the ROS1 implementation see ros_1 branch.\
 While the code has been **exclusivelly tested** with the **EGK40** model, support for all other EGK models is not **excluded**.
 
 ## Features
@@ -83,4 +83,4 @@ sudo iptables -I INPUT -p udp --dport 2222 -j ACCEPT
 
 ## Future Development
 
-In the future, a Docker implementation will be made available to simplify integration and improve compatibility with ROS1.
+No further developments are expected.
