@@ -30,7 +30,7 @@ The principal packages are briefly described in the following table:
 | --- | --- |
 | [Doc](Doc) | (Contains the necessary documentation to understand how to use the gripper and the .EDS file for Ethernet/IP Assembly communication. All the files can be found on the Schunk website.). |
 | [schunk_hardware_interface](schunk_hardware_interface) |  Contains the actual code responsible for establishing the connection with the gripper and providing the necessary services and topics.  |
-| [schunk_interface](schunk_interfaces) | Contains information about the messages and services used by this repository. |
+| [schunk_interfaces](schunk_interfaces) | Contains information about the messages and services used by this repository. |
 
 ## Usage
 
