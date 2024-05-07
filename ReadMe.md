@@ -59,7 +59,7 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
     ```
 
 ### Usage + examples
-1. **Launch the Node**: Launch the node to start communication with the gripper.
+1. **Launch the Node**: Set the gripper ip in [config](schunk_hardware_interface/config/params.yaml) file and launch the node to start communication with the gripper.
     ```
     roslaunch schunk_hardware_interface gripper.launch
     ```
