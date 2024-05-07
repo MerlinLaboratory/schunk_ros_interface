@@ -54,7 +54,7 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 ### Installation
 1. Clone the repository into your ROS2 workspace and build it:
     ```
-    git clone https://github.com/MerlinLaboratory/schunk_ros_interface.git
+    git clone https://github.com/MerlinLaboratory/schunk_ros_interface.git --branch ros_1
     catkin build
     ```
 
