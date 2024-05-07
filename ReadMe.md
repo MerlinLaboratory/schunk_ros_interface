@@ -1,14 +1,15 @@
-# ROS2 drivers for EGK Schunk Grippers
+# ROS drivers for EGK Schunk Grippers
 
-This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
+**NOTE:** the support for this branch has been **dropped**. I will answer issues and problems but I will not add any additional features than the already present ones.
+
+This repository serves as a ROS wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
 
 ## Hardware Dependencies
 
 **OS**: Linux Ubuntu \
 **Gripper**: EGK-40-EI-M-B
 
-Tested on Ubuntu 20.04 with ROS2 Foxy and Ubuntu 22.04 with ROS2 Humble. \
-Soon a Docker file with a bridge will be available to make the repo work with ROS1.\
+Tested on Ubuntu 20.04 with ROS Noetic. \
 While the code has been **exclusivelly tested** with the **EGK40** model, support for all other EGK models is not **excluded**.
 
 ## Features
@@ -54,23 +55,23 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 1. Clone the repository into your ROS2 workspace and build it:
     ```
     git clone https://github.com/MerlinLaboratory/schunk_ros_interface.git
-    colcon build
+    catkin build
     ```
 
 ### Usage + examples
 1. **Launch the Node**: Launch the node to start communication with the gripper.
     ```
-    ros2 run schunk_hardware_interface schunk_gripper_node
+    roslaunch schunk_hardware_interface gripper.launch
     ```
 
 2. **Access Gripper State**: Subscribe to the gripper state topic to receive updates on the gripper's status.
     ```
-    ros2 topic echo TODO
+    rostopic echo TODO
     ```
 
 3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example:
     ```
-    ros2 service call TODO
+    rosservice call TODO
     ```
 
 # Troubleshooting
@@ -83,4 +84,4 @@ sudo iptables -I INPUT -p udp --dport 2222 -j ACCEPT
 
 ## Future Development
 
-In the future, a Docker implementation will be made available to simplify integration and improve compatibility with ROS1.
+None
