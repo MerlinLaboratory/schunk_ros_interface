@@ -66,13 +66,24 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 
 2. **Access Gripper State**: Subscribe to the gripper state topic to receive updates on the gripper's status.
     ```
-    rostopic echo TODO
+    rostopic echo /schunk/egk_40_state
     ```
 
-3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example:
+3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example (see each srv for the params meaning):
     ```
-    rosservice call TODO
+    rosservice call /schunk/egk_40/jog_to "position: 0.0 velocity: 6.0 motion_type: 0"
     ```
+    <img src="Doc/img/JogTo.gif" width="400" height="600" />
+    
+    ```
+    rosservice call /schunk/egk_40/simple_grip "gripping_force: 50 gripping_direction: 0"
+    ```
+    <img src="Doc/img/SimpleGrip.gif" width="400" height="600" />
+
+    ```
+    rosservice call /schunk/egk_40/release "{}"
+    ```
+    <img src="Doc/img/Release.gif" width="400" height="600" />
 
 # Troubleshooting
 ### No Data received from gripper/ gripper does not respond to commands
