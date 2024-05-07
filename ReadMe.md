@@ -69,9 +69,24 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
     ```
 
 3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example:
+
     ```
-    ros2 service call TODO
+    ros2 service call /schunk/egk_40/jog_to schunk_interfaces/jog_to "position: 0.0 velocity: 6.0 motion_type: 0"
     ```
+    <img src="Doc/img/JogTo.gif" width="400" height="600" />
+    
+    ```
+    ros2 service call /schunk/egk_40/simple_grip schunk_interfaces/simple_grip "gripping_force: 50 gripping_direction: 0"
+    ```
+    <img src="Doc/img/SimpleGrip.gif" width="400" height="600" />
+
+    ```
+    ros2 service call /schunk/egk_40/release schunk_interfaces/release "{}"
+    ```
+    <img src="Doc/img/Release.gif" width="400" height="600" />
+
+
+
 
 # Troubleshooting
 ### No Data received from gripper/ gripper does not respond to commands
