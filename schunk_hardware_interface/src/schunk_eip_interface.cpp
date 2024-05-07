@@ -266,15 +266,13 @@ void SchunkGripper::declareParameters()
     this->nodeHandler.param<CipReal>("min_pos", this->min_pos, 0.0);
     this->nodeHandler.param<CipReal>("max_pos", this->max_pos, 0.0);
     this->nodeHandler.param<CipReal>("zero_pos_ofs", this->zero_pos_ofs, 0.0);
-    this->nodeHandler.param<CipReal>("min_vel", this->min_vel, 0.0);
-    this->nodeHandler.param<CipReal>("max_vel", this->max_vel, 0.0);
     this->nodeHandler.param<CipReal>("max_grp_vel", this->max_grp_vel, 0.0);
     this->nodeHandler.param<CipReal>("min_grp_force", this->min_grp_force, 0.0);
     this->nodeHandler.param<CipReal>("max_grp_force", this->max_grp_force, 0.0);
 
     try
     {
-        writeExplicitEipData(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE, this->wp_lost_dst);
+        // writeExplicitEipData(this->si, WP_LOST_DST_ID, VALUE_ATTRIBUTE, this->wp_lost_dst);
         writeExplicitEipData(this->si, WP_RELEASE_DELTA_ID, VALUE_ATTRIBUTE, this->wp_release_delta);
         writeExplicitEipData(this->si, GRP_POS_MARGIN_ID, VALUE_ATTRIBUTE, this->grp_pos_margin);
         writeExplicitEipData(this->si, GRP_PREPOS_DELTA_ID, VALUE_ATTRIBUTE, this->grp_prepos_delta);
@@ -324,8 +322,8 @@ bool SchunkGripper::jogToSrv(JogToRequest &req, JogToResponse &res)
     int32_t desired_position = static_cast<int32_t>(req.position * 1000);
     int32_t desired_velocity = static_cast<int32_t>(req.velocity * 1000);
     uint8_t motion_type = req.motion_type;
-    auto ABSOLUTE_MOTION = schunk_interfaces::JogTo::Request::ABSOLUTE_MOTION;
-    auto RELATIVE_MOTION = schunk_interfaces::JogTo::Request::RELATIVE_MOTION;
+    auto ABSOLUTE_MOTION = schunk_interfaces::JogToRequest::ABSOLUTE_MOTION;
+    auto RELATIVE_MOTION = schunk_interfaces::JogToRequest::RELATIVE_MOTION;
 
     res.success = false;
 
@@ -551,8 +549,12 @@ bool SchunkGripper::releaseSrv(ReleaseRequest &, ReleaseResponse &res)
 
 SchunkGripper::SchunkGripper()
 {
+    this->nodeHandler = ros::NodeHandle();
+
     this->nodeHandler.param<std::string>("gripper_name", this->node_name, "gripper");
     this->nodeHandler.param<std::string>("gripper_ip", this->gripper_ip, "0.0.0.0");
+
+    ROS_INFO("Connecting to %s with ip: %s", this->node_name.c_str(), this->gripper_ip.c_str());
 
     // --- Ethernet/IP --- //
     // Setting Loggin level
@@ -628,9 +630,9 @@ SchunkGripper::SchunkGripper()
 
     // Services
     this->acknowledge_srv = this->nodeHandler.advertiseService(this->node_name + "/acknowledge", &SchunkGripper::acknowledgeSrv, this);
-    this->jog_to_srv      = this->nodeHandler.advertiseService(this->node_name + "/jog_to", &SchunkGripper::jogToSrv, this);
+    this->jog_to_srv = this->nodeHandler.advertiseService(this->node_name + "/jog_to", &SchunkGripper::jogToSrv, this);
     this->simple_grip_srv = this->nodeHandler.advertiseService(this->node_name + "/simple_grip", &SchunkGripper::simpleGripSrv, this);
-    this->release_srv     = this->nodeHandler.advertiseService(this->node_name + "/release", &SchunkGripper::releaseSrv, this);
+    this->release_srv = this->nodeHandler.advertiseService(this->node_name + "/release", &SchunkGripper::releaseSrv, this);
 
     // Timers callbacks
     timer = this->nodeHandler.createTimer(ros::Duration(0.1), std::bind(&SchunkGripper::publishStateUpdate, this));
