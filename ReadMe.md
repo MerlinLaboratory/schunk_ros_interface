@@ -1,6 +1,6 @@
 # ROS2 drivers for EGK Schunk Grippers
 
-This repository serves as a ROS2 wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
+This repository serves as a ROS2 and ROS1 (see ros_1 branch) wrapper for controlling EGK Schunk grippers with Ethernet/IP connection. The repo leverages the [EIPScanner](https://github.com/nimbuscontrols/EIPScanner) repository to establish the necessary Ethernet/IP connection with the gripper. 
 
 ## Hardware Dependencies
 
@@ -29,7 +29,7 @@ The principal packages are briefly described in the following table:
 | --- | --- |
 | [Doc](Doc) | (Contains the necessary documentation to understand how to use the gripper and the .EDS file for Ethernet/IP Assembly communication. All the files can be found on the Schunk website.). |
 | [schunk_hardware_interface](schunk_hardware_interface) |  Contains the actual code responsible for establishing the connection with the gripper and providing the necessary services and topics.  |
-| [schunk_interface](schunk_interface) | Contains information about the messages and services used by this repository. |
+| [schunk_interfaces](schunk_interfaces) | Contains information about the messages and services used by this repository. |
 
 ## Usage
 
