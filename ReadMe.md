@@ -60,9 +60,9 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 ### Usage + examples
 1. **Launch the Node**: Set the gripper ip in [config](schunk_hardware_interface/config/params.yaml) file and launch the node to start communication with the gripper.
     ```
-    ros2 run schunk_hardware_interface schunk_gripper_node
+    ros2 launch schunk_hardware_interface gripper.launch
     ```
-
+    See [here](#troubleshooting) in case of problems or errors.
 2. **Access Gripper State**: Subscribe to the gripper state topic to receive updates on the gripper's status.
     ```
     ros2 topic echo TODO
@@ -95,6 +95,14 @@ In case the gripper does not communicates with your system, try to allow UDP con
 sudo iptables -A OUTPUT -p udp -m udp --sport 2222 -j ACCEPT
 sudo iptables -I INPUT -p udp --dport 2222 -j ACCEPT
 ```
+
+### Node crashes at launch with communication error
+If the node of the gripper crashes at launch, be sure that your computer running ROS has exclusive ownership of the device. For example, in our setup, we have all the devices connected to a switch, creating a subnetwork under 192.168.125.X, as the following figure shows: 
+
+<img src="Doc/img/Setup.png" width="800" height="600" />
+
+As soon the gripper is connected to the subnetwork, the robot might take exclusive ownership of the gripper, making the code crash. 
+Unluckily, I cannot provide a unique solution since it is robot-dependent. However, you need to make the robot 'forget' the gripper. In my case, we have a GoFa from ABB with the Schunk App installed on the Teach Pendant; we just had to click 'Delete Gripper' once I opened the App.
 
 ## Future Development
 
