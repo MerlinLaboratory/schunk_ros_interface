@@ -31,6 +31,18 @@ The principal packages are briefly described in the following table:
 | [schunk_hardware_interface](schunk_hardware_interface) |  Contains the actual code responsible for establishing the connection with the gripper and providing the necessary services and topics.  |
 | [schunk_interfaces](schunk_interfaces) | Contains information about the messages and services used by this repository. |
 
+## Hardware Connection
+
+Taking as  reference the gifs in the next paragraphs, the gripper exposes two cables: 
+  - the green one for communication with external devices
+  - the black one that powers the system
+
+To connect the green cable with the ethernet port of your computer you will need buy an [adapter](https://us.rs-online.com/product/rs-pro/2017169/72296280/). The black cables that powers the system is composed of 4 cables. Two provide power to the gripper and two provide power to the control system. These two need to be supplied with a tension of 24V and can be connected as the left for testing purposes. On the right instead how they are connected to the robot. Notice that the brown and black connectors are the source (+24V) while the white and the blue are the ground (0V).
+
+| Testing | Robot connection |
+|:---:|:---:|
+| ![Testing connection](Doc/img/TestingConnection.jpg) | ![Robot connection](Doc/img/RobotConnection.jpg) |
+
 ## Usage
 
 ### Prerequisites and Dependencies
