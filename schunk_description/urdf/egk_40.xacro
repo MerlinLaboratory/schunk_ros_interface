@@ -100,14 +100,14 @@
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger1" />
       <origin xyz="0.016 0.071 0.02" rpy="0 ${pi/2} 0" />
-      <limit lower="0.0" upper="0.04" effort="100.0" velocity="10.0" />
+      <limit lower="0.0" upper="0.0415" effort="100.0" velocity="10.0" />
     </joint>
 
     <joint name="${prefix}finger2_joint" type="prismatic">
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger2" />
       <origin xyz="-0.016 0.071 -0.02" rpy="0 ${-pi/2} 0" />
-      <limit lower="0.0" upper="0.04" effort="100.0" velocity="10.0" />
+      <limit lower="0.0" upper="0.0415" effort="100.0" velocity="10.0" />
     </joint>
 
   </xacro:macro>
