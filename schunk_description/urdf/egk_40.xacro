@@ -60,11 +60,11 @@
       </collision>
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="0.1" />
+        <mass value="0.3" />
         <inertia
-          ixx="0.001" ixy="0.0" ixz="0.0"
-          iyy="0.001" iyz="0.0"
-          izz="0.001" />
+          ixx="0.1" ixy="0.0" ixz="0.0"
+          iyy="0.1" iyz="0.0"
+          izz="0.1" />
       </inertial>
     </link>
 
@@ -87,11 +87,11 @@
       </collision>
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="0.1" />
+        <mass value="0.3" />
         <inertia
-          ixx="0.001" ixy="0.0" ixz="0.0"
-          iyy="0.001" iyz="0.0"
-          izz="0.001" />
+          ixx="0.1" ixy="0.0" ixz="0.0"
+          iyy="0.1" iyz="0.0"
+          izz="0.1" />
       </inertial>
     </link>
 
@@ -100,14 +100,14 @@
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger1" />
       <origin xyz="0.016 0.071 0.02" rpy="0 ${pi/2} 0" />
-      <limit lower="0.0" upper="0.0415" effort="100.0" velocity="10.0" />
+      <limit lower="0.0" upper="0.0415" effort="1000.0" velocity="10.0" />
     </joint>
 
     <joint name="${prefix}finger2_joint" type="prismatic">
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger2" />
       <origin xyz="-0.016 0.071 -0.02" rpy="0 ${-pi/2} 0" />
-      <limit lower="0.0" upper="0.0415" effort="100.0" velocity="10.0" />
+      <limit lower="0.0" upper="0.0415" effort="1000.0" velocity="10.0" />
     </joint>
 
   </xacro:macro>
