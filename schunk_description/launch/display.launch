@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="launch_rviz" default="true" doc="whether or not you want to launch Rviz" />
+  <arg name="launch_jspg" default="true" doc="whether or not you want to launch joint state publisher gui" />
+
+  <include file="$(find schunk_description)/launch/upload.launch"/>
+
+  <node pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" name="joint_state_publisher_gui" output="screen" if="$(arg launch_jspg)">
+    <param name="use_gui" value="true" />
+  </node>
+  
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="ignore_timestamp" value="true" />
+  </node>
+
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find schunk_description)/config/rviz.rviz" if="$(arg launch_rviz)"/>
+
+</launch>

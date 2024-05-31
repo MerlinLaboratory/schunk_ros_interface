@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="egk_40_complete" >
+
+  <!-- parameters -->
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="parent" default="world"/>
+
+  <xacro:property name="parent" value="$(arg parent)" />
+
+  <xacro:arg name="px" default="0.0"/>
+  <xacro:arg name="py" default="0.0"/>
+  <xacro:arg name="pz" default="0.0"/>
+  <xacro:arg name="rx" default="0.0"/>
+  <xacro:arg name="ry" default="0.0"/>
+  <xacro:arg name="rz" default="0.0"/>
+
+  <!-- includes -->
+  <xacro:include filename="$(find schunk_description)/urdf/egk_40.xacro" />
+
+  <!-- define world link -->
+  <xacro:if value="${parent == 'world'}">
+    <link name="world" /> 
+  </xacro:if>
+
+  <!-- Gripper's main body -->
+  <xacro:egk_40 prefix="$(arg prefix)"/>
+
+  <!-- Fingers -->
+  <!-- TODO -->
+
+  <!-- Joint connecting gripper base (gripper_body) to parent -->
+  <joint name="parent_to_gripper" type="fixed">
+    <parent link="$(arg parent)" />
+    <child  link="$(arg prefix)gripper_body" />
+    <origin xyz="$(arg px) $(arg py) $(arg pz)" rpy="$(arg rx) $(arg ry) $(arg rz)" />
+  </joint>
+
+</robot>
