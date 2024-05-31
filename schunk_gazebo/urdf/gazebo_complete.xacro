@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="egk_40">
+
+  <xacro:macro name="egk_40_gazebo" params="prefix parent px py pz rx ry rz hardware_interface">
+
+    <!-- includes -->
+    <xacro:include filename="$(find schunk_description)/urdf/egk_40_complete.xacro" />
+    <xacro:include filename="$(find schunk_gazebo)/urdf/transmissions.xacro" />
+
+    <!-- Launching each component -->
+    <!-- Gripper's main body -->
+    <xacro:egk_40_complete
+      prefix="$(arg prefix)"
+      parent="$(arg parent)"
+      px="$(arg px)" py="$(arg py)" pz="$(arg pz)"
+      rx="$(arg rx)" ry="$(arg ry)" rz="$(arg rz)" />
+
+    <!-- Tramsmissions -->
+    <xacro:egk_40_transmission hardware_interface="$(arg hardware_interface)" />
+
+    <!-- Loading Gazebo plugins -->
+    <gazebo>
+      <plugin name="ros_control" filename="libgazebo_ros_control.so">
+        <!--robotNamespace>/</robotNamespace-->
+        <!--robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType-->
+      </plugin>
+    </gazebo>
+
+    <!-- Disabling gravity -->
+    <gazebo reference="finger1">
+      <gravity>0</gravity>
+    </gazebo>
+  
+    <gazebo reference="finger2">
+      <gravity>0</gravity>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

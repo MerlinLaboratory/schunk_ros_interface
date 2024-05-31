@@ -5,5 +5,5 @@ joint_state_controller:
 gripper_controller:
   type: effort_controllers/JointGroupEffortController
   joints: 
-    - gripper_body-finger1
-    - gripper_body-finger2
+    - finger1_joint
+    - finger2_joint
