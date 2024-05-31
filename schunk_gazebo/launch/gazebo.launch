@@ -6,7 +6,7 @@
   <arg name="world_name" default="worlds/empty.world" doc="Gazebo world file"/>
   <arg name="world_pose" default="-x 0 -y 0 -z 0.1 -R 1.54 -P 0 -Y 0" doc="Pose to spawn the gripper at"/>
   <arg name="initial_joint_positions" default=" -J finger1_joint 0 -J finger2_joint 0" doc="Initial joint configuration of the gripper"/>
-  <arg name="controllers" default="gripper_controller joint_state_controller" doc="Controllers that are activated by default."/>
+  <arg name="controllers" default="gripper_controller gripper_joint_state_controller" doc="Controllers that are activated by default."/>
   <arg name="launch_rviz" default="true" doc="Whether or not to launch Rviz."/>
 
   <!-- Loading the gripper description -->
@@ -20,8 +20,9 @@
   </include>
 
   <!-- Load the controllers -->
-  <rosparam command="load" file="$(find schunk_gazebo)/config/controllers.yaml"/>
-  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="$(arg controllers)"/>
+  <include file="$(find schunk_gazebo)/launch/schunk_control.launch">
+    <arg name="controllers" value="$(arg controllers)"/>
+  </include>
 
   <!-- Unpause the simulation after loading the robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />

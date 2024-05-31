@@ -7,16 +7,16 @@
     <xacro:include filename="$(find schunk_description)/urdf/egk_40.xacro" />
   
     <!-- Gripper's main body -->
-    <xacro:egk_40 prefix="$(arg prefix)"/>
+    <xacro:egk_40 prefix="${prefix}"/>
   
     <!-- Fingers -->
     <!-- TODO -->
   
     <!-- Joint connecting gripper base (gripper_body) to parent -->
     <joint name="parent_to_gripper" type="fixed">
-      <parent link="$(arg parent)" />
-      <child  link="$(arg prefix)gripper_body" />
-      <origin xyz="$(arg px) $(arg py) $(arg pz)" rpy="$(arg rx) $(arg ry) $(arg rz)" />
+      <parent link="${parent}" />
+      <child  link="${prefix}gripper_body" />
+      <origin xyz="${px} ${py} ${pz}" rpy="${rx} ${ry} ${rz}" />
     </joint>
 
   </xacro:macro>

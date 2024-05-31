@@ -22,7 +22,7 @@
   <!-- Gripper's main body -->
   <xacro:egk_40_gazebo 
     prefix="$(arg prefix)" 
-    parent="$(arg parent)" 
+    parent="$(arg parent)"
     px="$(arg px)" py="$(arg py)" pz="$(arg pz)" 
     rx="$(arg rx)" ry="$(arg ry)" rz="$(arg rz)"
     hardware_interface="$(arg hardware_interface)" />

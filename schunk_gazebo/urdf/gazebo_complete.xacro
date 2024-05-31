@@ -10,13 +10,13 @@
     <!-- Launching each component -->
     <!-- Gripper's main body -->
     <xacro:egk_40_complete
-      prefix="$(arg prefix)"
-      parent="$(arg parent)"
-      px="$(arg px)" py="$(arg py)" pz="$(arg pz)"
-      rx="$(arg rx)" ry="$(arg ry)" rz="$(arg rz)" />
+      prefix="${prefix}"
+      parent="${parent}"
+      px="${px}" py="${py}" pz="${pz}"
+      rx="${rx}" ry="${ry}" rz="${rz}" />
 
     <!-- Tramsmissions -->
-    <xacro:egk_40_transmission hardware_interface="$(arg hardware_interface)" />
+    <xacro:egk_40_transmission hardware_interface="${hardware_interface}" />
 
     <!-- Loading Gazebo plugins -->
     <gazebo>
