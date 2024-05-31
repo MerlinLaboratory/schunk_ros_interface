@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+
+  <include file="$(find schunk_description)/launch/upload.launch">
+    <arg name="gazebo_sim" value="$(arg gazebo_sim)" />
+  </include>
+
+  <group if="$(eval arg('gazebo_sim') == 'no')">
+    <node pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" name="joint_state_publisher_gui" output="screen" if="$(arg gazebo_sim = 'no')">
+      <param name="use_gui" value="true" />
+    </node>
+  </group> 
+  
+  <!-- loading controllers -->
+  <rosparam command="load" file="$(find schunk_gazebo)/config/controllers.yaml"/>
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="gripper_controller joint_state_controller"/>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="ignore_timestamp" value="true" />
+  </node>
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find schunk_description)/config/rviz.rviz"/>
+
+</launch>

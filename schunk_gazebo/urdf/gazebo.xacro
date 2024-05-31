@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="egk_40">
+
+  <xacro:macro name="egk_40" params="prefix">
+    
+      <gazebo>
+        <plugin name="ros_control" filename="libgazebo_ros_control.so">
+          <!--robotNamespace>/</robotNamespace-->
+          <!--robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType-->
+        </plugin>
+      </gazebo>
+
+      <!-- Trasmissions -->
+      <transmission name="tran_1">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="${prefix}gripper_body-finger1">
+              <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="motor_1">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+           <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+     </transmission>
+  
+     <transmission name="tran_2">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="${prefix}gripper_body-finger2">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="motor_2">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+           <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+     </transmission>
+    
+  </xacro:macro>
+
+</robot>
