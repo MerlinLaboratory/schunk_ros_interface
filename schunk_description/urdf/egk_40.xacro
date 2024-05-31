@@ -31,6 +31,14 @@
             scale="0.001 0.001 0.001" />
         </geometry>
       </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1.5" />
+        <inertia
+          ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
     </link>
 
     <!-- Finger 1 -->
@@ -50,6 +58,14 @@
             scale="0.001 0.001 0.001" />
         </geometry>
       </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.1" />
+        <inertia
+          ixx="0.001" ixy="0.0" ixz="0.0"
+          iyy="0.001" iyz="0.0"
+          izz="0.001" />
+      </inertial>
     </link>
 
     <!-- Finger 2 -->
@@ -69,17 +85,25 @@
             scale="0.001 0.001 0.001" />
         </geometry>
       </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.1" />
+        <inertia
+          ixx="0.001" ixy="0.0" ixz="0.0"
+          iyy="0.001" iyz="0.0"
+          izz="0.001" />
+      </inertial>
     </link>
 
     <!-- joints: main serial chain -->
-    <joint name="${prefix}gripper_body-finger1" type="prismatic">
+    <joint name="${prefix}finger1_joint" type="prismatic">
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger1" />
       <origin xyz="0.016 0.071 0.02" rpy="0 ${pi/2} 0" />
       <limit lower="0.0" upper="0.04" effort="100.0" velocity="10.0" />
     </joint>
 
-    <joint name="${prefix}gripper_body-finger2" type="prismatic">
+    <joint name="${prefix}finger2_joint" type="prismatic">
       <parent link="${prefix}gripper_body" />
       <child link="${prefix}finger2" />
       <origin xyz="-0.016 0.071 -0.02" rpy="0 ${-pi/2} 0" />
