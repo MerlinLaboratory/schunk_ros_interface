@@ -8,7 +8,7 @@
   <arg name="initial_joint_positions" default=" -J finger1_joint 0 -J finger2_joint 0" doc="Initial joint configuration of the gripper"/>
   <arg name="controllers" default="gripper_controller gripper_joint_state_controller" doc="Controllers that are activated by default."/>
   <arg name="launch_rviz" default="true" doc="Whether or not to launch Rviz."/>
-  <arg name="gui" default="false" doc="Whether or not launch Gazebo GUI."/>
+  <arg name="gui" default="true" doc="Whether or not launch Gazebo GUI."/>
 
   <!-- Loading the gripper description -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find schunk_gazebo)/urdf/test.xacro'" />

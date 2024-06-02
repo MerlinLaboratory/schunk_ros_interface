@@ -5,12 +5,15 @@
 
     <!-- includes -->
     <xacro:include filename="$(find schunk_description)/urdf/egk_40.xacro" />
+    <xacro:include filename="$(find schunk_description)/urdf/finger.xacro" />
   
     <!-- Gripper's main body -->
     <xacro:egk_40 prefix="${prefix}"/>
   
     <!-- Fingers -->
-    <!-- TODO -->
+    <xacro:finger prefix="left" parent="finger1"/>
+    <xacro:finger prefix="right" parent="finger2"/>
+    
   
     <!-- Joint connecting gripper base (gripper_body) to parent -->
     <joint name="parent_to_gripper" type="fixed">
