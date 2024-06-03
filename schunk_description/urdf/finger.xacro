@@ -13,7 +13,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://schunk_description/meshes/fingers/visual/flat_finger.stl"
+          <mesh filename="package://schunk_description/meshes/fingers/visual/flat_finger.dae"
             scale="0.001 0.001 0.001" />
         </geometry>
         <material name="finger_black" />
