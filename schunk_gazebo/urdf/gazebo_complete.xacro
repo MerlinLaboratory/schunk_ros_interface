@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="egk_40">
 
-  <xacro:macro name="egk_40_gazebo" params="prefix parent px py pz rx ry rz hardware_interface">
+  <xacro:macro name="egk_40_gazebo" params="prefix parent px py pz rx ry rz hardware_interface launch_gazebo_ros_control_plugin='yes'">
 
     <!-- includes -->
     <xacro:include filename="$(find schunk_description)/urdf/egk_40_complete.xacro" />
@@ -9,6 +9,7 @@
 
     <!-- Launching each component -->
     <!-- Gripper's main body -->
+
     <xacro:egk_40_complete
       prefix="${prefix}"
       parent="${parent}"
@@ -19,12 +20,14 @@
     <xacro:egk_40_transmission hardware_interface="${hardware_interface}" />
 
     <!-- Loading Gazebo plugins -->
-    <gazebo>
-      <plugin name="ros_control" filename="libgazebo_ros_control.so">
-        <!--robotNamespace>/</robotNamespace-->
-        <!--robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType-->
-      </plugin>
-    </gazebo>
+    <xacro:if value="${launch_gazebo_ros_control_plugin == 'yes'}">
+      <gazebo>
+        <plugin name="ros_control" filename="libgazebo_ros_control.so">
+          <!--robotNamespace>/</robotNamespace-->
+          <!--robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType-->
+        </plugin>
+      </gazebo>
+    </xacro:if>
 
     <!-- Disabling gravity -->
     <gazebo reference="finger1">

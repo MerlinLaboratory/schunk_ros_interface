@@ -8,7 +8,7 @@ schunk:
   grp_pos_margin: 2.0 # [mm]
   grp_prepos_delta: 5.0 # [mm]
   min_pos: 0.0  # [mm]
-  max_pos: 40.0 # [mm]
+  max_pos: 80.0 # [mm]
   zero_pos_ofs: 0.0 # [mm]
 
 # TO BE NOTICED: if you input a value that does not make sense (it is outside the system boundaries), 
