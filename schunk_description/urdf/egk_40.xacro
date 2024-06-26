@@ -19,7 +19,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://schunk_description/meshes/egk40/visual/egk40_body.stl"
+          <mesh filename="package://schunk_description/meshes/egk40/visual/egk40_body.dae"
             scale="0.001 0.001 0.001" />
         </geometry>
         <material name="Grey" />
@@ -46,7 +46,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://schunk_description/meshes/egk40/visual/slider.stl"
+          <mesh filename="package://schunk_description/meshes/egk40/visual/slider.dae"
             scale="0.001 0.001 0.001" />
         </geometry>
         <material name="Black" />
@@ -73,7 +73,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://schunk_description/meshes/egk40/visual/slider.stl"
+          <mesh filename="package://schunk_description/meshes/egk40/visual/slider.dae"
             scale="0.001 0.001 0.001" />
         </geometry>
         <material name="Black" />
