@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="egk_40">
 
-  <xacro:macro name="egk_40_gazebo" params="prefix parent px py pz rx ry rz hardware_interface launch_gazebo_ros_control_plugin='yes'">
+  <xacro:macro name="egk_40_gazebo" params="prefix parent px py pz rx ry rz hardware_interface launch_gazebo_ros_control_plugin='true'">
 
     <!-- includes -->
     <xacro:include filename="$(find schunk_description)/urdf/egk_40_complete.xacro" />
@@ -20,7 +20,7 @@
     <xacro:egk_40_transmission hardware_interface="${hardware_interface}" />
 
     <!-- Loading Gazebo plugins -->
-    <xacro:if value="${launch_gazebo_ros_control_plugin == 'yes'}">
+    <xacro:if value="${launch_gazebo_ros_control_plugin}">
       <gazebo>
         <plugin name="ros_control" filename="libgazebo_ros_control.so">
           <!--robotNamespace>/</robotNamespace-->
