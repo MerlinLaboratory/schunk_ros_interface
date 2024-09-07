@@ -51,6 +51,7 @@ ROS2 Humble needs to be installed and configured in your computer.
 The only other dependency that the repo requires is [EIPScanner](https://github.com/nimbuscontrols/EIPScanner). Just clone it and build it (it is not necessary to put this repo in your ROS workspace):
   ```
   git clone https://github.com/nimbuscontrols/EIPScanner.git
+  cd EIPScanner 
   mkdir build && cd build
   cmake ..
   cmake --build . --target install
