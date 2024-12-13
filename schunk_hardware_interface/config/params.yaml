@@ -1,6 +1,6 @@
 schunk:
   gripper_name: "egk_40"
-  gripper_ip: "192.168.125.160"
+  gripper_ip: "192.168.50.160"
 
   grp_prehold_time: 0.0 # [ms]
   wp_lost_dst: 10.0 # [mm]
