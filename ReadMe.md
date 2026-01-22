@@ -73,7 +73,7 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 ### Usage + examples
 1. **Launch the Node**: Set the gripper ip in [config](schunk_hardware_interface/config/params.yaml) file and launch the node to start communication with the gripper.
     ```
-    ros2 launch schunk_hardware_interface gripper.launch
+    ros2 launch schunk_hardware_interface gripper_launch.py
     ```
     See [here](#troubleshooting) in case of problems or errors.
 2. **Access Gripper State**: Subscribe to the gripper state topic to receive updates on the gripper's status.
@@ -84,17 +84,17 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
 3. **Control the Gripper**: Call the provided services to command the gripper's actions. For example:
 
     ```
-    ros2 service call /schunk/egk_40/jog_to schunk_interfaces/jog_to "position: 0.0 velocity: 6.0 motion_type: 0"
+    ros2 service call /schunk/egk_40/jog_to schunk_interfaces/srv/JogTo "{position: 20.0, velocity: 100.0, motion_type: 0}"
     ```
     <img src="Doc/img/JogTo.gif" width="400" height="600" />
     
     ```
-    ros2 service call /schunk/egk_40/simple_grip schunk_interfaces/simple_grip "gripping_force: 50 gripping_direction: 0"
+    ros2 service call /schunk/egk_40/simple_grip schunk_interfaces/srv/SimpleGrip "{gripping_force: 50 gripping_direction: 0}"
     ```
     <img src="Doc/img/SimpleGrip.gif" width="400" height="600" />
 
     ```
-    ros2 service call /schunk/egk_40/release schunk_interfaces/release "{}"
+    ros2 service call /schunk/egk_40/release schunk_interfaces/srv/Release "{}"
     ```
     <img src="Doc/img/Release.gif" width="400" height="600" />
 
