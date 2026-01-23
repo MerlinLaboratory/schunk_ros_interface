@@ -89,7 +89,7 @@ The only other dependency that the repo requires is [EIPScanner](https://github.
     <img src="Doc/img/JogTo.gif" width="400" height="600" />
     
     ```
-    ros2 service call /schunk/egk_40/simple_grip schunk_interfaces/srv/SimpleGrip "{gripping_force: 50 gripping_direction: 0}"
+    ros2 service call /schunk/egk_40/simple_grip schunk_interfaces/srv/SimpleGrip "{gripping_force: 50, gripping_direction: 0}"
     ```
     <img src="Doc/img/SimpleGrip.gif" width="400" height="600" />
 
